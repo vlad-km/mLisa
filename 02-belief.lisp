@@ -109,7 +109,13 @@
 (defmethod belief->english ((cf number))
   (cf->english cf))
 
-(:export '(belief::ADJUST-BELIEF belief::BELIEF->ENGLISH
+(defmethod belief-factor ((self fact))
+  (belief-factor self))
+
+(defmethod belief-factor ((self rule))
+  (belief-factor self))
+
+(export '(belief::ADJUST-BELIEF belief::BELIEF->ENGLISH
            belief::BELIEF-FACTOR belief::FALSE-P belief::TRUE-P belief::UKNOWN-P))
 
 (in-package :cl-user)

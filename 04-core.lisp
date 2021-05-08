@@ -1840,6 +1840,7 @@ return its index.  If there are no children, return
 ;;; File: rete.lisp
 ;;; Description: Class representing the inference engine itself.
 
+(error "EQUALP")
 (defclass rete ()
   ((fact-table :initform (make-hash-table :test #'equalp)
                :accessor rete-fact-table)

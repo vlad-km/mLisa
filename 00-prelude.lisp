@@ -6,7 +6,7 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package :lilu)
-    (make-package :liu :use (list 'cl)))
+    (make-package :lilu :use (list 'cl)))
   (unless (find-package :lisa)
     (make-package :lisa :use (list 'cl)))
   (unless (find-package :lisa-user)

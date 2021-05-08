@@ -28,7 +28,7 @@
 (defgeneric clear-memories (join-node))
 (defgeneric accept-token-from-right (join-node reset-token))
 (defgeneric test-against-right-memory (node2 left-tokens))
-(defgeneric remove-node-from-parent (rete-network parent child))
+;;;(defgeneric remove-node-from-parent (rete-network parent child))
 (defgeneric add-successor (parent new-node connector))
 (defgeneric decrement-use-count (join-node))
 (defgeneric find-existing-successor (shared-node  node1))
@@ -472,12 +472,24 @@
   (push (make-node-pair node parent) *rule-specific-nodes*)
   node)
 
-(defmethod remove-node-from-parent ((self rete-network) (parent t) child)
+#+nil
+(defmethod remove-node-from-parent ((self rete-network)(parent t) child)
   (remhash (node1-test child) (rete-roots self)))
-
-(defmethod remove-node-from-parent ((self rete-network) 
-                                    (parent shared-node) child)
+#+nil
+(defmethod remove-node-from-parent ((self rete-network)(parent shared-node) child)
   (remove-successor parent child))
+
+(defun remove-node-from-parent (self parent child)
+  (typecase self
+    (rete-network
+     (cond ((eql parent t)
+            (remhash (node1-test child) (rete-roots self)))
+           ((typep parent 'shared-node)
+            (remove-successor parent child))
+           (t (error "remove-node-from-parent: WTF node ~a?" parent))))
+    (t (error "remove-node-from-parent: WTF rete-network ~a" self))))
+
+
 
 (defun make-root-node (class)
   (let* ((test (make-class-test class))

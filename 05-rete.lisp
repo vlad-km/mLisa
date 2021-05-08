@@ -500,11 +500,11 @@
     (record-node root t)))
 
 (defmethod add-successor ((parent t) new-node connector)
-  (declare (ignore connector))
+  ;;(declare (ignore connector))
   new-node)
 
 (defmethod add-successor :around ((parent shared-node) new-node connector)
-  (declare (ignore new-node connector))
+  ;;(declare (ignore new-node connector))
   (record-node (call-next-method) parent))
 
 (defun make-intra-pattern-node (slot)
@@ -517,6 +517,7 @@
                 (make-intra-pattern-test slot)))))
     (make-node1 test)))
 
+(error "LOOP HASH")
 (defun distribute-token (rete-network token)
   (loop for root-node being the hash-values 
       of (rete-roots rete-network)

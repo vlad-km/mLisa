@@ -140,6 +140,7 @@
     (setf *active-engine* (make-inference-engine)))
   *active-engine*)
 
+#+nil
 (defun use-default-engine ()
   (warn "USE-DEFAULT-ENGINE is deprecated. LISA now automatically creates a
   default instance of the inference engine at load time.")
@@ -166,11 +167,10 @@
   `(let ((*active-engine* ,engine))
     (progn ,@body)))
 
-(register-clear-handler
- "environment" 
- #'(lambda ()
-     (setf *active-engine* (make-inference-engine))
-     (setf *active-context* (find-context (inference-engine) :initial-context))))
+(register-clear-handler "environment" 
+                        #'(lambda ()
+                            (setf *active-engine* (make-inference-engine))
+                            (setf *active-context* (find-context (inference-engine) :initial-context))))
 
 ;;; File: conditions.lisp
 

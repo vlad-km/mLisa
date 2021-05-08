@@ -52,8 +52,6 @@
   (make-instance 'node2-test))
 
 ;;; File: shared-node.lisp
-
-
 (defclass shared-node ()
   ((successors :initform (make-hash-table :test #'equal)
                :reader shared-node-successors)
@@ -88,8 +86,6 @@
       collect successor))
 
 ;;; File: successor.lisp
-
-
 (defun make-successor (node connector)
   (cons node connector))
 
@@ -106,8 +102,6 @@
          args))
 
 ;;; File: node-pair.lisp
-
-
 (defun make-node-pair (child parent)
   (cons child parent))
 
@@ -119,8 +113,6 @@
 
 
 ;;; File: terminal-node.lisp
-
-
 (defclass terminal-node ()
   ((rule :initarg :rule
          :initform nil
@@ -154,7 +146,6 @@
   (make-instance 'terminal-node :rule rule))
 
 ;;; File: node1.lisp
-
 (defclass node1 (shared-node)
   ((test :initarg :test
          :reader node1-test)))
@@ -199,7 +190,6 @@
 
 
 ;;; File: join-node.lisp
-
 (defclass join-node ()
   ((successor :initform nil
               :accessor join-node-successor)
@@ -286,7 +276,6 @@
             (length (join-node-tests self)))))
 
 ;;; File: node2.lisp
-
 (defclass node2 (join-node) ())
 
 (defmethod test-against-right-memory ((self node2) left-tokens)
@@ -327,35 +316,31 @@
 (defun make-node2 ()
   (make-instance 'node2))
 
-
 ;;; File: node2-not.lisp
-
 (defclass node2-not (join-node) ())
 
 (defmethod test-against-right-memory ((self node2-not) left-tokens)
   (loop for right-token being the hash-values of (join-node-right-memory self)
-      do (when (test-tokens self left-tokens right-token)
-           (token-increment-not-counter left-tokens)))
+        do (when (test-tokens self left-tokens right-token)
+             (token-increment-not-counter left-tokens)))
   (unless (token-negated-p left-tokens)
     (pass-tokens-to-successor 
      self (combine-tokens left-tokens self))))
 
-(defmethod test-against-left-memory ((self node2-not) 
-                                     (right-token add-token))
+(defmethod test-against-left-memory ((self node2-not) (right-token add-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
-      do (when (test-tokens self left-tokens right-token)
-           (token-increment-not-counter left-tokens)
-           (pass-tokens-to-successor 
-            self (combine-tokens (make-remove-token left-tokens) self)))))
+        do (when (test-tokens self left-tokens right-token)
+             (token-increment-not-counter left-tokens)
+             (pass-tokens-to-successor 
+              self (combine-tokens (make-remove-token left-tokens) self)))))
   
-(defmethod test-against-left-memory ((self node2-not) 
-                                     (right-token remove-token))
+(defmethod test-against-left-memory ((self node2-not)(right-token remove-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
-      do (when (and (test-tokens self left-tokens right-token)
-                    (not (token-negated-p
-                          (token-decrement-not-counter left-tokens))))
-           (pass-tokens-to-successor 
-            self (combine-tokens left-tokens self)))))
+        do (when (and (test-tokens self left-tokens right-token)
+                      (not (token-negated-p
+                            (token-decrement-not-counter left-tokens))))
+             (pass-tokens-to-successor 
+              self (combine-tokens left-tokens self)))))
   
 (defmethod accept-tokens-from-left ((self node2-not) (left-tokens add-token))
   (add-tokens-to-left-memory self left-tokens)
@@ -377,7 +362,6 @@
   (make-instance 'node2-not))
 
 ;;; File: node2-test.lisp
-
 (defclass node2-test (join-node) ())
 
 (defmethod accept-tokens-from-left ((self node2-test) (left-tokens add-token))
@@ -395,7 +379,6 @@
   (make-instance 'node2-test))
 
 ;;; File: node2-exists.lisp
-
 (defclass node2-exists (join-node) ())
 
 (error "LOOP HASH")
@@ -449,7 +432,6 @@
 
 
 ;;; File: rete-compiler.lisp
-
 (defvar *root-nodes* nil)
 (defvar *rule-specific-nodes* nil)
 (defvar *leaf-nodes* nil)
@@ -667,7 +649,6 @@
     to-network))
 
 ;;; File: tms.lisp
-
 (defmethod pass-tokens-to-successor :before ((self join-node)
                                              (left-tokens remove-token))
   (when (logical-block-p self)
@@ -675,7 +656,6 @@
      (make-dependency-set left-tokens (join-node-logical-block self)))))
 
 ;;; File: network-ops.lisp
-
 (error "loop hash-values")
 (defun add-token-to-network (rete-network token-ctor)
   (loop for root-node being the hash-values of (rete-roots rete-network)
@@ -702,8 +682,6 @@
     (join-node 0)
     (terminal-node 0)
     (t (error "WTF ~a node?" node))))
-
-
 
 (defun remove-rule-from-network (rete-network rule)
   (labels ((remove-nodes (nodes)
@@ -732,7 +710,6 @@
        (t nil))
      (t nil))))
 
-
 (defvar *node-set* nil)
 
 #+nil
@@ -758,8 +735,6 @@
      (push (make-node-pair node parent) *node-set*))
     (join-node nil)
     (t (push (make-node-pair node parent) *node-set*))))
-
-     
 
 (defun merge-networks (from-rete to-rete)
   (labels ((find-root-node (network node)
@@ -834,6 +809,5 @@
                     nil))
                  (trace-nodes (rest nodes) level)))))
     (trace-nodes (get-roots))))
-
 
 ;;; EOF

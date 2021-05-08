@@ -145,6 +145,7 @@
   (clear-activation-bindings (terminal-node-rule self))
   t)
 
+#+nil
 (defmethod print-object ((self terminal-node) strm)
   (print-unreadable-object (self strm :type t)
     (format strm "~A" (rule-name (terminal-node-rule self)))))
@@ -188,6 +189,7 @@
 (defmethod accept-token ((self node1) (token reset-token))
   (pass-token-to-successors self (token-push-fact token t)))
 
+#+nil
 (defmethod print-object ((self node1) strm)
   (print-unreadable-object (self strm :type t :identity t)
     (format strm "~S ; ~D" (node1-test self) (node-use-count self))))
@@ -488,8 +490,6 @@
             (remove-successor parent child))
            (t (error "remove-node-from-parent: WTF node ~a?" parent))))
     (t (error "remove-node-from-parent: WTF rete-network ~a" self))))
-
-
 
 (defun make-root-node (class)
   (let* ((test (make-class-test class))

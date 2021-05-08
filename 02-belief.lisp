@@ -69,6 +69,7 @@
         (apply #'min conjuncts)
       nil)))
 
+;;; todo: reduce to (defun recalculate-cf)
 (defgeneric recalculate-cf (objects rule-cf old-cf))
 
 (defmethod recalculate-cf (objects (rule-cf number) (old-cf number))
@@ -94,10 +95,10 @@
         ((> cf 0.5) "suggestive evidence")
         ((> cf 0.0) "weakly suggestive evidence")
         ((= cf 0.0) "no evidence either way")
-        ((< cf 0.0) (concatenate 'string (cf->english (- cf)) " against the conclusion"))))
+        ((< cf 0.0) (jscl::concat (cf->english (- cf)) " against the conclusion"))))
 
 ;;; interface into the generic belief system.
-
+;;; todo: reduce to defun
 (defmethod adjust-belief (objects (rule-belief number) &optional (old-belief nil))
   (recalculate-cf objects rule-belief old-belief))
 
@@ -107,5 +108,10 @@
 
 (defmethod belief->english ((cf number))
   (cf->english cf))
+
+(:export '(belief::ADJUST-BELIEF belief::BELIEF->ENGLISH
+           belief::BELIEF-FACTOR belief::FALSE-P belief::TRUE-P belief::UKNOWN-P))
+
+(in-package :cl-user)
 
 ;;; EOF

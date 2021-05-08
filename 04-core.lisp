@@ -63,7 +63,7 @@
 (defgeneric add-activation (rete activation))
 (defgeneric disable-activation (rete activation))
 (defgeneric run-engine (rete &optional (step -1)))
-(defgeneric belief:belief-factor (fact))
+;;;(defgeneric belief:belief-factor (fact))
 
 (defvar *consider-taxonomy-when-reasoning* nil)
 (defvar *allow-duplicate-facts* t)
@@ -177,14 +177,15 @@
 
 ;;; File: conditions.lisp
 
-
+#+nil
 (define-condition duplicate-fact (error)
   ((existing-fact :reader duplicate-fact-existing-fact
                   :initarg :existing-fact))
   (:report (lambda (condition strm)
              (format strm "Lisa detected an attempt to assert a duplicate for: ~S"
                      (duplicate-fact-existing-fact condition)))))
-                  
+
+#+nil
 (define-condition parsing-error (error)
   ((text :initarg :text
          :initform nil
@@ -195,6 +196,7 @@
   (:report (lambda (condition strm)
              (format strm "Parsing error: ~A" (text condition)))))
 
+#+nil
 (define-condition slot-parsing-error (parsing-error)
   ((slot-name :initarg :slot-name
               :initform nil
@@ -205,6 +207,7 @@
              (when (text condition)
                (format strm " (~A)" (text condition))))))
 
+#+nil
 (define-condition class-parsing-error (parsing-error)
   ((class-name :initarg :class-name
                :initform nil
@@ -212,6 +215,7 @@
   (:report (lambda (condition strm)
              (format strm "Class parsing error: ~A, ~A" (class-name condition) (text condition)))))
 
+#+nil
 (define-condition rule-parsing-error (parsing-error)
   ((rule-name :initarg :rule-name
               :initform nil
@@ -233,6 +237,7 @@
               :initform nil
               :reader deffacts-fact-list)))
 
+#+nil
 (defmethod print-object ((self deffacts) strm)
   (print-unreadable-object (self strm :type t :identity t)
     (format strm "~S ; ~S" (deffacts-name self) (deffacts-fact-list self))))
@@ -260,7 +265,7 @@
    (meta-data :reader fact-meta-data)))
 
 ;;; bug: EQUALP
-(error "EQUALP!!!")
+;;;(error "EQUALP!!!")
 (defmethod equals ((fact-1 fact) (fact-2 fact))
   (and (eq (fact-name fact-1) (fact-name fact-2))
        (equalp (fact-slot-table fact-1) (fact-slot-table fact-2))))
@@ -318,7 +323,7 @@
 ;;;   "Returns the value associated with a slot name. FACT is a FACT instance;
 ;;;  SLOT-NAME is a SLOT-NAME instance."
 
-;;;(defgeneric get-slot-value (self slot-name))
+(defgeneric get-slot-value (self slot-name))
 
 ;;; todo: common defmethod with error
 
@@ -364,6 +369,7 @@
 (defun reconstruct-fact (fact)
   `(,(fact-name fact) ,@(get-slot-values fact)))
 
+#+nil
 (defmethod print-object ((self fact) strm)
   (print-unreadable-object (self strm :type nil :identity t)
     (format strm "~A ; id ~D" (fact-name self) (fact-id self))))
@@ -573,6 +579,7 @@
 (defun activation-fact-list (activation &key (detailp nil))
   (token-make-fact-list (activation-tokens activation) :detailp detailp))
 
+#+nil
 (defmethod print-object ((self activation) strm)
   (let ((tokens (activation-tokens self))
         (rule (activation-rule self)))
@@ -895,6 +902,7 @@ return its index.  If there are no children, return
    (strategy :initarg :strategy
              :reader context-strategy)))
 
+#+nil
 (defmethod print-object ((self context) strm)
   (print-unreadable-object (self strm :type t)
     (if (initial-context-p self)
@@ -1061,6 +1069,7 @@ return its index.  If there are no children, return
 (defmethod conflict-set ((self rule))
   (conflict-set (rule-context self)))
 
+#+nil
 (defmethod print-object ((self rule) strm)
   (print-unreadable-object (self strm :type t)
     (format strm "~A"
@@ -2221,9 +2230,11 @@ return its index.  If there are no children, return
 
 ;;; File: belief-interface.lisp
 
+#+nil
 (defmethod belief:belief-factor ((self fact))
   (belief-factor self))
 
+#+nil
 (defmethod belief:belief-factor ((self rule))
   (belief-factor self))
 

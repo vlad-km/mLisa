@@ -546,8 +546,8 @@
 
 ;;; end connector functions
 
+;;;  "The alpha memory nodes and tests"
 (defun add-intra-pattern-nodes (patterns)
-  "The alpha memory nodes and tests"
   (dolist (pattern patterns)
     (cond ((test-pattern-p pattern)
            (set-leaf-node t (parsed-pattern-address pattern)))
@@ -616,8 +616,8 @@
     (add-successor node join-node #'pass-token-on-right))
   join-node)
 
+;;;  "The beta memory nodes and tests"
 (defun add-inter-pattern-nodes (patterns)
-  "The beta memory nodes and tests"
   (dolist (pattern (rest patterns))
     (let ((join-node (make-join-node pattern))
           (address (parsed-pattern-address pattern)))
@@ -764,6 +764,7 @@
                        existing-root 
                        (shared-node-all-successors new-root)))))))
     (let ((*node-set* (list)))
+      ;;; bug: todo: loop hash-value
       (loop for new-root being the hash-values of (rete-roots from-rete)
             do (merge-root-node new-root))
       (nreverse *node-set*))))

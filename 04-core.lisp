@@ -604,11 +604,19 @@
 
 ;;; todo: as a defclass heap
 ;;; todo: OR DEFSTRUCT type list ?
+#+nil
 (defclass  heap ()
   ((less-fn :initform nil :accessor heap-less-fn)
   (order :initform 0 :accessor heap-order)
   (a :initform nil :accessor heap-a)
   (max-count :initform 0 :accessor heap-max-count)))
+
+(defstruct (heap :named (:type list))
+  less-fn
+  order
+  a
+  max-count)
+
 
 (defun default-search-predicate (heap obj)
   (declare (ignore heap) (ignore obj))
@@ -663,8 +671,16 @@ be a list or NIL."
     (setf (heap-max-count heap) (length (heap-a heap))))
   heap)
 
+#+nil
 (defun create-heap (less-fn &key (order 2) (initial-contents nil))
   (heap-init (make-instance 'heap)
+             less-fn
+             :order order
+	           :initial-contents initial-contents))
+
+;;; note: Hmm todo:
+(defun create-heap (less-fn &key (order 2) (initial-contents nil))
+  (heap-init (make-heap)
              less-fn
              :order order
 	           :initial-contents initial-contents))

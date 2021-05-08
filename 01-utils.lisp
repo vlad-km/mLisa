@@ -9,8 +9,7 @@
 ;;; Modification for JSCL under Electron platform
 ;;; Copyright (C) 2021 Vladimir K. Mezentsev (@vlad-km)
 
-(in-package :lisa)
-
+#+nil
 (defun build-lambda-expression (forms)
   (labels ((compose-body (forms &optional (body nil))
              (if (null forms)
@@ -21,7 +20,7 @@
     `(lambda ()
        (progn ,@(compose-body forms)))))
   
-;;; todo:
+#+nil
 (defmacro compile-function (forms)
   "Build and compile an anonymous function, using the body provided in
   FORMS."
@@ -29,12 +28,12 @@
 
 ;;; File: utils.lisp
 
+(in-package :lilu)
 ;;; This version of FIND-BEFORE courtesy of Bob Bane, Global Science and
 ;;; Technology...
-
+;;;"Returns both that portion of SEQUENCE that occurs before ITEM and
+;;;  the rest of SEQUENCE anchored at ITEM, or NIL otherwise."
 (defun find-before (item sequence &key (test #'eql))
-  "Returns both that portion of SEQUENCE that occurs before ITEM and
-  the rest of SEQUENCE anchored at ITEM, or NIL otherwise."
   (labels ((find-item (obj seq test val valend)
 	     (let ((item (first seq)))
                (cond ((null seq)
@@ -50,9 +49,9 @@
       (let ((head (list (car sequence))))
         (find-item item (cdr sequence) test head head)))))
 
+;;;  "Returns that portion of SEQUENCE that occurs after ITEM, or NIL
+;;;  otherwise."
 (defun find-after (item sequence &key (test #'eql))
-  "Returns that portion of SEQUENCE that occurs after ITEM, or NIL
-  otherwise."
   (cond ((null sequence)
          (values nil))
         ((funcall test item (first sequence))
@@ -66,7 +65,19 @@
          (rest sequence))
         (t
          (find-if-after predicate (rest sequence)))))
+(export '(lilu::find-before lilu::find-after lilu::find-if-after))
 
+;;; Courtesy of Paul Graham...
+(defun flatten (x)
+  (labels ((rec (x acc)
+             (cond ((null x) acc)
+                   ((atom x) (cons x acc))
+                   (t (rec (car x) (rec (cdr x) acc))))))
+    (rec x nil)))
+(export '(lilu::flatten))
+(in-package :cl-user)
+
+#+nil
 (defun lsthash (func ht)
   "Applies FUNC to each entry in hashtable HT and, if FUNC so
   indicates, appends the object to a LIST. If NIL is an acceptable
@@ -80,22 +91,13 @@
                      (push obj seq)))) ht)
     (values seq)))
 
+#+nil
 (defun collect (predicate list)
   (let ((collection (list)))
     (dolist (obj list)
       (when (funcall predicate obj)
         (push obj collection)))
     (nreverse collection)))
-
-;;; Courtesy of Paul Graham...
-
-;;; todo: ???
-(defun flatten (x)
-  (labels ((rec (x acc)
-             (cond ((null x) acc)
-                   ((atom x) (cons x acc))
-                   (t (rec (car x) (rec (cdr x) acc))))))
-    (rec x nil)))
 
 ;;; All code below courtesy of the PORT module, CLOCC project.
 
@@ -132,11 +134,14 @@
 ;;; Extensions
 ;;;
 
+#+nil
 (defmacro mk-arr (type init &optional len)
   "Make array with elements of TYPE, initializing."
   (if len `(make-array ,len :element-type ,type :initial-element ,init)
       `(make-array (length ,init) :element-type ,type
         :initial-contents ,init)))
+
+(in-package :lilu)
 
 (defmacro with-gensyms (syms &body body)
   "Bind symbols to gensyms.  First sym is a string - `gensym' prefix.
@@ -150,16 +155,22 @@ Inspired by Paul Graham, <On Lisp>, p. 145."
   (with-gensyms ("MI-" mi)
     `(let ((,mi ,seq)) (map-into ,mi ,fn ,mi ,@seqs))))
 
+(export '(lilu::with-gensym lilu::map-in))
+(in-package :cl-user)
+
+#+nil
 (defparameter +eof+ (list '+eof+)
   "*The end-of-file object.
 To be passed as the third arg to `read' and checked against using `eq'.")
 
 ;;; bug:
+#+nil
 (defun eof-p (stream)
   "Return T if the stream has no more data in it."
   (null (peek-char nil stream nil nil)))
 
 ;;; todo: bug:
+#+nil
 (defun string-tokens (string &key (start 0) max)
   "Read from STRING repeatedly, starting with START, up to MAX tokens.
 Return the list of objects read and the final index in STRING.
@@ -178,14 +189,15 @@ so that the bare symbols are read as keywords."
               (return (values (nreverse res) beg))
               (push obj res)))
         ;; bug: concatenate
-        (read-from-string (concatenate 'string "(" string ")")
+        (read-from-string (jscl::concat "(" string ")")
                           t nil :start start))))
 
+#+nil
 (defun required-argument ()
   "A useful default for required arguments and DEFSTRUCT slots."
   (error "A required argument was not supplied."))
 
-;;; todo:
+(in-package :lilu)
 (defmacro compose (&rest functions)
   "Macro: compose functions or macros of 1 argument into a lambda.
 E.g., (compose abs (dl-val zz) 'key) ==>
@@ -199,5 +211,7 @@ E.g., (compose abs (dl-val zz) 'key) ==>
     (with-gensyms ("COMPOSE-" arg)
       (let ((ff (rec functions arg)))
         `(lambda (,arg) ,ff)))))
+(export '(lilu::compose))
+(in-package :cl-user)
 
 ;;; EOF

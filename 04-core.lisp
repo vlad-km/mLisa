@@ -7,9 +7,6 @@
 ;;; Modification for JSCL under Electron platform
 ;;; Copyright (C) 2021 Vladimir K. Mezentsev (@vlad-km)
 
-;;; File: preamble.lisp
-
-
 (defvar *active-rule* nil)
 (defvar *active-engine* nil)
 (defvar *active-tokens* nil)

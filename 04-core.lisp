@@ -2435,8 +2435,8 @@
 
 ;;; File: retrieve.lisp
 
-(defvar *query-result* nil
-  "Holds the results of query firings.")
+;;;  "Holds the results of query firings.")
+(defvar *query-result* nil)
 
 ;;; bug: todo: LISA ASSERT
 ;;;  "Runs a query (RULE instance), and returns both the value of *QUERY-RESULT*

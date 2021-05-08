@@ -13,6 +13,6 @@
 (load "05-rete.lisp" :hook bin)
 (load "06-config.lisp" :hook bin :output "mlisa.js")
 ```
-Will be bundle js-code file1, file2, file3 from bin to "lib.js"
+Will be bundle js-code "mlisa.js".
 
 ##### as is, without any guarantees or obligations

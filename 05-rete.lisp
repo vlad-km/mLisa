@@ -670,6 +670,7 @@
 
 ;;; File: network-ops.lisp
 
+(error "loop hash-values")
 (defun add-token-to-network (rete-network token-ctor)
   (loop for root-node being the hash-values of (rete-roots rete-network)
       do (accept-token root-node (funcall token-ctor))))

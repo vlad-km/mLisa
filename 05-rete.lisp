@@ -31,7 +31,7 @@
 ;;;(defgeneric remove-node-from-parent (rete-network parent child))
 (defgeneric add-successor (parent new-node connector))
 (defgeneric decrement-use-count (join-node))
-(defgeneric find-existing-successor (shared-node  node1))
+;;;(defgeneric find-existing-successor (shared-node  node1))
 ;;;(defgeneric add-node-set (parent node &optional count-p ))
 
 
@@ -714,12 +714,23 @@
                  (remove-nodes (rest nodes))))))
     (remove-nodes (rule-node-list rule))))
 
+#+nil
 (defmethod find-existing-successor ((parent shared-node) (node node1))
   (gethash (node1-test node) (shared-node-successors parent)))
 
+#+nil
 (defmethod find-existing-successor (parent node)
   (declare (ignore parent node))
   nil)
+
+(defun find-existing-successor (parent node)
+  (typecase parent
+    (shared-node
+     (typecase node
+       (node1 (gethash (node1-test node) (shared-node-successors parent)))
+       (t nil))
+     (t nil))))
+
 
 (defvar *node-set* nil)
 

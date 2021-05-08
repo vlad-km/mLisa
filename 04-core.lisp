@@ -1346,7 +1346,7 @@ return its index.  If there are no children, return
 
 (defun collect-bindings (forms &key (errorp t))
   (let ((bindings (list)))
-    (dolist (obj (utils:flatten forms))
+    (dolist (obj (lilu:flatten forms))
       (when (variablep obj)
         (let ((binding (find-slot-binding obj :errorp errorp)))
           (unless (null binding)
@@ -1364,7 +1364,7 @@ return its index.  If there are no children, return
 
 (defun collect-constraint-bindings (constraint)
   (let ((bindings (list)))
-    (dolist (obj (utils:flatten constraint))
+    (dolist (obj (lilu:flatten constraint))
       (when (variablep obj)
         (pushnew (find-slot-binding obj) bindings :key #'first)))
     bindings))
@@ -1458,8 +1458,8 @@ return its index.  If there are no children, return
                           :rule-name *current-defrule*
                           :location *current-defrule-pattern-location*))
                  (cond ((null pattern-list)
-                        (unless *in-logical-pattern-p*
-                          (nreverse patterns)))
+                        ;; note: Hmmm
+                        (unless *in-logical-pattern-p* (nreverse patterns)))
                        ;; logical CEs are "special"; they don't have their own parser.
                        ((logical-element-p pattern)
                         (let ((*in-logical-pattern-p* t))
@@ -1474,11 +1474,11 @@ return its index.  If there are no children, return
                 :bindings (collect-bindings actions :errorp nil)
                 :actions actions)))
       (multiple-value-bind (lhs remains)
-          (utils:find-before *rule-separator* body :test #'eq)
+          (lilu:find-before *rule-separator* body :test #'eq)
         (unless remains
           (error 'rule-parsing-error :text "missing rule separator"))
         (values (parse-lhs (preprocess-left-side lhs))
-                (parse-rhs (utils:find-after *rule-separator* remains :test #'eq)))))))
+                (parse-rhs (lilu:find-after *rule-separator* remains :test #'eq)))))))
 
 ;;; The conditional element parsers...
 

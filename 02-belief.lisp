@@ -103,7 +103,7 @@
   (recalculate-cf objects rule-belief old-belief))
 
 (defmethod adjust-belief (objects (rule-belief t) &optional old-belief)
-  (declare (ignore objects old-belief))
+;;;  (declare (ignore objects old-belief))
   nil)
 
 (defmethod belief->english ((cf number))

@@ -11,7 +11,7 @@
 ;;; Modification for JSCL under Electron platform
 ;;; Copyright (C) 2021 Vladimir K. Mezentsev (@vlad-km)
 
-(in-package :reflect)
+;;(in-package :reflect)
 
 (defun class-slots* (obj)
   (class-slots

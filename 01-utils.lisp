@@ -106,26 +106,26 @@
 ;;;
 
 ;;; (:documentation "An error in the user code.")
+#+nil
 (define-condition code (error)
-  ((proc :reader code-proc :initarg :proc)
-   (mesg :type simple-string :reader code-mesg :initarg :mesg)
-   (args :type list :reader code-args :initarg :args))
+  ((proc :initform nil :reader code-proc :initarg :proc)
+   (mesg :initform nil :reader code-mesg :initarg :mesg)
+   (args :initform nil :reader code-args :initarg :args))
   ;;(:documentation "An error in the user code.")
   (:report (lambda (cc out)
-             (declare (stream out))
-             (format out "[~s]~@[ ~?~]" (code-proc cc)
-                     (and (slot-boundp cc 'mesg) (code-mesg cc))
-                     (and (slot-boundp cc 'args) (code-args cc))))))
+             (apply #'format out "[~s]~@[ ~?~]" (code-proc cc)(code-mesg cc)(code-args cc)))))
 
 ;;; An error in a case statement.
 ;;; This carries the function name which makes the error message more useful.
+#+nil
 (define-condition case-error (code)
-  ((mesg :type simple-string :reader code-mesg :initform
+  ((mesg :reader code-mesg :initform
          "`~s' evaluated to `~s', not one of [~@{`~s'~^ ~}]")))
 
 ;;; "Your implementation does not support this functionality."
+#+nil
 (define-condition not-implemented (code)
-  ((mesg :type simple-string :reader code-mesg :initform
+  ((mesg :reader code-mesg :initform
          "not implemented for ~a [~a]")
    (args :type list :reader code-args :initform
          (list (lisp-implementation-type) (lisp-implementation-version)))))

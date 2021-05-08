@@ -32,7 +32,7 @@
 (defgeneric add-successor (parent new-node connector))
 (defgeneric decrement-use-count (join-node))
 (defgeneric find-existing-successor (shared-node  node1))
-(defgeneric add-node-set (parent node &optional count-p ))
+;;;(defgeneric add-node-set (parent node &optional count-p ))
 
 
 (defclass node2-test (join-node) ())
@@ -723,18 +723,31 @@
 
 (defvar *node-set* nil)
 
+#+nil
 (defmethod add-node-set ((parent shared-node) node &optional (count-p nil))
   (when count-p
     (increment-use-count parent))
   (push (make-node-pair node parent) *node-set*))
 
+#+nil
 (defmethod add-node-set ((parent join-node) node &optional count-p)
   (declare (ignore node count-p))
   nil)
 
+#+nil
 (defmethod add-node-set (parent node &optional count-p)
   (declare (ignore count-p))
   (push (make-node-pair node parent) *node-set*))
+
+(defun add-node-set (parent node &optional (count-p nil))
+  (typecase parent
+    (shared-node
+     (when count-p (increment-use-count parent))
+     (push (make-node-pair node parent) *node-set*))
+    (join-node nil)
+    (t (push (make-node-pair node parent) *node-set*))))
+
+     
 
 (defun merge-networks (from-rete to-rete)
   (labels ((find-root-node (network node)

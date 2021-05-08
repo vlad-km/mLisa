@@ -12,7 +12,7 @@
 
 (defgeneric accept-tokens-from-left (self left))
 (defgeneric increment-use-count (shared-node))
-(defgeneric decrement-use-count (shared-node))
+;;;(defgeneric decrement-use-count (shared-node))
 (defgeneric node-use-count (shared-node))
 (defgeneric node-referenced-p (shared-node))
 (defgeneric pass-token-to-successors (shared-node token))
@@ -688,8 +688,16 @@
    rete-network #'(lambda () (make-reset-token t))))
 
 ;;; note: wooow
-(defmethod decrement-use-count ((node join-node)) 0)
-(defmethod decrement-use-count ((node terminal-node)) 0)
+#+nil (defmethod decrement-use-count ((node join-node)) 0)
+#+nil (defmethod decrement-use-count ((node terminal-node)) 0)
+
+(defun decrement-use-count (node)
+  (typecase node
+    (join-node 0)
+    (terminal-node 0)
+    (t (error "WTF ~a node?" node))))
+
+
 
 (defun remove-rule-from-network (rete-network rule)
   (labels ((remove-nodes (nodes)

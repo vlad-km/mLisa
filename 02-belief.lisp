@@ -59,15 +59,15 @@
         (t (/ (+ a b)
               (- 1 (min (abs a) (abs b)))))))
 
+;;;  "Combines the certainty factors of objects matched within a single rule."
 (defun conjunct-cf (objects)
-  "Combines the certainty factors of objects matched within a single rule."
   (let ((conjuncts
-         (loop for obj in objects
-               for cf = (belief-factor obj)
-               if cf collect cf)))
+          (loop for obj in objects
+                for cf = (belief-factor obj)
+                if cf collect cf)))
     (if conjuncts
         (apply #'min conjuncts)
-      nil)))
+        nil)))
 
 ;;; todo: reduce to (defun recalculate-cf)
 (defgeneric recalculate-cf (objects rule-cf old-cf))
@@ -108,6 +108,8 @@
 
 (defmethod belief->english ((cf number))
   (cf->english cf))
+
+(error "Where primary belief method?")
 
 (defmethod belief-factor ((self fact))
   (belief-factor self))

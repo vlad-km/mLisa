@@ -25,13 +25,13 @@
 (defun slot-alloc (slot) (slot-definition-allocation slot))
 (defun slot-one-initarg (slot) (slot-definition-initargs slot))
 
+;;;  "Return the list of slots of a CLASS.
+;;; CLASS can be a symbol, a class object (as returned by `class-of')
+;;; or an instance of a class.
+;;; If the second optional argument ALL is non-NIL (default),
+;;; all slots are returned, otherwise only the slots with
+;;; :allocation type :instance are returned."
 (defun class-slot-list (class &optional (all t))
-  "Return the list of slots of a CLASS.
-CLASS can be a symbol, a class object (as returned by `class-of')
-or an instance of a class.
-If the second optional argument ALL is non-NIL (default),
-all slots are returned, otherwise only the slots with
-:allocation type :instance are returned."
   ;;(unless (class-finalized-p class)(finalize-inheritance class))
   (mapcan (if all
               (lilu:compose list slot-name)
@@ -40,13 +40,13 @@ all slots are returned, otherwise only the slots with
                   (list (slot-name slot)))))
           (class-slots* class)))
 
+;;;  "Return the list of initargs of a CLASS.
+;;;CLASS can be a symbol, a class object (as returned by `class-of')
+;;;or an instance of a class.
+;;;If the second optional argument ALL is non-NIL (default),
+;;;initargs for all slots are returned, otherwise only the slots with
+;;;:allocation type :instance are returned."
 (defun class-slot-initargs (class &optional (all t))
-  "Return the list of initargs of a CLASS.
-CLASS can be a symbol, a class object (as returned by `class-of')
-or an instance of a class.
-If the second optional argument ALL is non-NIL (default),
-initargs for all slots are returned, otherwise only the slots with
-:allocation type :instance are returned."
   (mapcan (if all (lilu:compose list slot-one-initarg)
               (lambda (slot)
                 (when (eq (slot-alloc slot) :instance)

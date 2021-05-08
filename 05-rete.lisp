@@ -275,6 +275,7 @@
 (defmethod accept-token-from-right ((self join-node) (left-tokens reset-token))
   nil)
 
+#+nil
 (defmethod print-object ((self join-node) strm)
   (print-unreadable-object (self strm :type t :identity t)
     (format strm "left ~S ; right ~S ; tests ~S"
@@ -395,6 +396,8 @@
 
 (defclass node2-exists (join-node) ())
 
+(error "LOOP HASH")
+
 (defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))
   (loop for right-token being the hash-values of (join-node-right-memory self)
         do (when (test-tokens self left-tokens right-token)
@@ -450,20 +453,11 @@
 (defvar *leaf-nodes* nil)
 (defvar *logical-block-marker*)
 
-(defun set-leaf-node (node address)
-  (setf (aref *leaf-nodes* address) node))
-
-(defun leaf-node ()
-  (aref *leaf-nodes* (1- (length *leaf-nodes*))))
-
-(defun left-input (address)
-  (aref *leaf-nodes* (1- address)))
-
-(defun right-input (address)
-  (aref *leaf-nodes* address))
-
-(defun logical-block-marker ()
-  *logical-block-marker*)
+(defun set-leaf-node (node address) (setf (aref *leaf-nodes* address) node))
+(defun leaf-node () (aref *leaf-nodes* (1- (length *leaf-nodes*))))
+(defun left-input (address) (aref *leaf-nodes* (1- address)))
+(defun right-input (address)  (aref *leaf-nodes* address))
+(defun logical-block-marker () *logical-block-marker*)
   
 (defclass rete-network ()
   ((root-nodes :initform (make-hash-table)
@@ -474,8 +468,7 @@
                     :reader node-test-cache)))
 
 (defun record-node (node parent)
-  (when (typep parent 'shared-node)
-    (increment-use-count parent))
+  (when (typep parent 'shared-node) (increment-use-count parent))
   (push (make-node-pair node parent) *rule-specific-nodes*)
   node)
 

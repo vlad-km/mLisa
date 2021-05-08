@@ -152,9 +152,9 @@
 
 ;;; todo:
 ;;; bug:
+;;;  "Returns the currently-active inference engine. Usually only invoked by code
+;;;  running within the context of WITH-INFERENCE-ENGINE."
 (defun current-engine (&optional (errorp t))
-  "Returns the currently-active inference engine. Usually only invoked by code
-  running within the context of WITH-INFERENCE-ENGINE."
   (when errorp
     (cl:assert (not (null *active-engine*)) (*active-engine*)
       "The current inference engine has not been established."))
@@ -163,9 +163,9 @@
 (defun inference-engine (&rest args)
   (apply #'current-engine args))
 
+;;;  "Evaluates BODY within the context of the inference engine ENGINE. This
+;;;    macro is MP-safe."
 (defmacro with-inference-engine ((engine) &body body)
-  "Evaluates BODY within the context of the inference engine ENGINE. This
-    macro is MP-safe."
   `(let ((*active-engine* ,engine))
     (progn ,@body)))
 
@@ -288,32 +288,32 @@
 (defun fact-symbolic-id (fact)
   (format nil "F-~D" (fact-id fact)))
 
+;;;  "Assigns a new value to a slot in a fact and its associated CLOS
+;;;  instance. SLOT-NAME is a symbol; VALUE is the new value for the
+;;;  slot."
 (defun set-slot-value (fact slot-name value)
-  "Assigns a new value to a slot in a fact and its associated CLOS
-  instance. SLOT-NAME is a symbol; VALUE is the new value for the
-  slot."
   (with-auto-notify (object (find-instance-of-fact fact))
     (setf (slot-value-of-instance object slot-name) value)
     (initialize-slot-value fact slot-name value)))
 
+;;;  "Sets the value of a slot in a fact's slot table. FACT is a FACT instance;
+;;;  SLOT-NAME is a symbol; VALUE is the slot's new value."
 (defun initialize-slot-value (fact slot-name value)
-  "Sets the value of a slot in a fact's slot table. FACT is a FACT instance;
-  SLOT-NAME is a symbol; VALUE is the slot's new value."
   (setf (gethash slot-name (fact-slot-table fact)) value)
   fact)
 
+;;;  "Assigns to a slot the value from the corresponding slot in the fact's CLOS
+;;;  instance. FACT is a FACT instance; META-FACT is a META-FACT instance;
+;;;  INSTANCE is the fact's CLOS instance; SLOT-NAME is a symbol representing the
+;;;  affected slot."
 (defun set-slot-from-instance (fact instance slot-name)
-  "Assigns to a slot the value from the corresponding slot in the fact's CLOS
-  instance. FACT is a FACT instance; META-FACT is a META-FACT instance;
-  INSTANCE is the fact's CLOS instance; SLOT-NAME is a symbol representing the
-  affected slot."
   (initialize-slot-value
    fact slot-name
    (slot-value-of-instance instance slot-name)))
 
+;;;  "Returns a list of slot name / value pairs for every slot in a fact. FACT is
+;;;  a fact instance."
 (defun get-slot-values (fact)
-  "Returns a list of slot name / value pairs for every slot in a fact. FACT is
-  a fact instance."
   (let ((slots (list)))
     (maphash #'(lambda (slot value)
                  (push (list slot value) slots))
@@ -349,10 +349,10 @@
   (find (find-class symbolic-name) (get-superclasses (fact-meta-data fact))))
 
 (defun synchronize-with-instance (fact &optional (effective-slot nil))
-  "Makes a fact's slot values and its CLOS instance's slot values match. If a
-  slot identifier is provided then only that slot is synchronized. FACT
-  is a FACT instance; EFFECTIVE-SLOT, if supplied, is a symbol representing
-  the CLOS instance's slot."
+;;;  "Makes a fact's slot values and its CLOS instance's slot values match. If a
+;;;  slot identifier is provided then only that slot is synchronized. FACT
+;;;  is a FACT instance; EFFECTIVE-SLOT, if supplied, is a symbol representing
+;;;  the CLOS instance's slot."
   (let ((instance (find-instance-of-fact fact))
         (meta (fact-meta-data fact)))
     (flet ((synchronize-all-slots ()
@@ -396,9 +396,9 @@
 (error "ASSERT!")
 
 (defun initialize-fact-from-template (fact slots meta-data)
-  "Initializes a template-bound FACT. An instance of the FACT's associated
-  class is created and the slots of both are synchronized from the SLOTS
-  list. FACT is a FACT instance; SLOTS is a list of symbol/value pairs."
+;;;  "Initializes a template-bound FACT. An instance of the FACT's associated
+;;;  class is created and the slots of both are synchronized from the SLOTS
+;;;  list. FACT is a FACT instance; SLOTS is a list of symbol/value pairs."
   (let ((instance
          (make-instance (find-class (get-class-name meta-data) nil))))
     ;; bug:
@@ -413,9 +413,9 @@
     fact))
 
 (defun initialize-fact-from-instance (fact instance meta-data)
-  "Initializes a fact associated with a user-created CLOS instance. The fact's
-  slot values are taken from the CLOS instance. FACT is a FACT instance;
-  INSTANCE is the CLOS instance associated with this fact."
+;;;  "Initializes a fact associated with a user-created CLOS instance. The fact's
+;;;  slot values are taken from the CLOS instance. FACT is a FACT instance;
+;;;  INSTANCE is the CLOS instance associated with this fact."
   (mapc #'(lambda (slot-name)
             (set-slot-from-instance fact instance slot-name))
         (get-slot-list meta-data))
@@ -424,20 +424,20 @@
   fact)
 
 (defun make-fact (name &rest slots)
-  "The default constructor for class FACT. NAME is the symbolic fact name as
-  used in rules; SLOTS is a list of symbol/value pairs."
+;;;  "The default constructor for class FACT. NAME is the symbolic fact name as
+;;;  used in rules; SLOTS is a list of symbol/value pairs."
   (make-instance 'fact :name name :slots slots))
 
 (defun make-fact-from-instance (name clos-instance)
-  "A constructor for class FACT that creates an instance bound to a
-  user-defined CLOS instance. NAME is the symbolic fact name; CLOS-INSTANCE is
-  a user-supplied CLOS object."
+;;;  "A constructor for class FACT that creates an instance bound to a
+;;;  user-defined CLOS instance. NAME is the symbolic fact name; CLOS-INSTANCE is
+;;;  a user-supplied CLOS object."
   (make-instance 'fact :name name :instance clos-instance))
   
 (defun make-fact-from-template (fact)
-  "Creates a FACT instance using another FACT instance as a
-  template. Basically a clone operation useful for such things as asserting
-  DEFFACTS."
+;;;  "Creates a FACT instance using another FACT instance as a
+;;;  template. Basically a clone operation useful for such things as asserting
+;;;  DEFFACTS."
   (apply #'make-fact
          (fact-name fact)
          (mapcar #'(lambda (slot-name)
@@ -629,9 +629,9 @@
   (declare (ignore heap) (ignore obj))
   t)
 
+;;;  "Private. Move the HOLE down until it's in a location suitable for X.
+;;; Return the new index of the hole."
 (defun percolate-down (heap hole x)
-  "Private. Move the HOLE down until it's in a location suitable for X.
-Return the new index of the hole."
   (do ((a (heap-a heap))
        (less (heap-less-fn heap))
        (child (lesser-child heap hole) (lesser-child heap hole)))
@@ -640,11 +640,12 @@ Return the new index of the hole."
     (setf (aref a hole) (aref a child)
       hole child)))
 
+;;;  "Private.  Moves the HOLE until it's in a location suitable for holding
+;;; X.  Does not actually bind X to the HOLE.  Returns the new
+;;; index of the HOLE.  The hole itself percolates down; it's the X
+;;; that percolates up."
+
 (defun percolate-up (heap hole x)
-  "Private.  Moves the HOLE until it's in a location suitable for holding
-X.  Does not actually bind X to the HOLE.  Returns the new
-index of the HOLE.  The hole itself percolates down; it's the X
-that percolates up."
   (let ((d (heap-order heap))
 	      (a (heap-a heap))
 	      (less (heap-less-fn heap)))
@@ -658,11 +659,12 @@ that percolates up."
 
 (defvar *heap* nil)
 
+;;;  "Initialize the indicated heap.  If INITIAL-CONTENTS is a non-empty
+;;; list, the heap's contents are intiailized to the values in that
+;;; list; they are ordered according to LESS-FN.  INITIAL-CONTENTS must
+;;; be a list or NIL."
+
 (defun heap-init (heap less-fn &key (order 2) (initial-contents nil))
-  "Initialize the indicated heap.  If INITIAL-CONTENTS is a non-empty
-list, the heap's contents are intiailized to the values in that
-list; they are ordered according to LESS-FN.  INITIAL-CONTENTS must
-be a list or NIL."
   (setf *heap* heap)
   (setf (heap-less-fn heap) less-fn
         (heap-order heap)   order
@@ -692,44 +694,43 @@ be a list or NIL."
              :order order
 	           :initial-contents initial-contents))
 
+;;;  "Remove all elements from the heap, leaving it empty.  Faster
+;;;(& more convenient) than calling HEAP-REMOVE until the heap is
+;;;empty."
 (defun heap-clear (heap)
-  "Remove all elements from the heap, leaving it empty.  Faster
-(& more convenient) than calling HEAP-REMOVE until the heap is
-empty."
   (setf (fill-pointer (heap-a heap)) 1)
   nil)
 
 (defun heap-count (heap)
   (1- (fill-pointer (heap-a heap))))
 
+;;;  "Returns non-NIL if & only if the heap contains no items."
 (defun heap-empty-p (heap)
-  "Returns non-NIL if & only if the heap contains no items."
   (= (fill-pointer (heap-a heap)) 1))
 
+;;;  "Insert a new element into the heap.  Return the element (which probably
+;;;                                                                  isn't very useful)."
 (defun heap-insert (heap x)
-  "Insert a new element into the heap.  Return the element (which probably
-                                                                  isn't very useful)."
   (let ((a (heap-a heap)))
     ;; Append a hole for the new element.
     (vector-push-extend nil a)
-
     ;; Move the hole from the end towards the front of the
     ;; queue until it is in the right position for the new
     ;; element.
     (setf (aref a (percolate-up heap (1- (fill-pointer a)) x)) x)))
 
+;;;  "Return the index of the element which satisfies the predicate FNP.
+;;; If there is no such element, return the fill pointer of HEAP's array A."
 (defun heap-find-idx (heap fnp)
-  "Return the index of the element which satisfies the predicate FNP.
-If there is no such element, return the fill pointer of HEAP's array A."
   (do* ((a (heap-a heap))
 	      (fp (fill-pointer a))
 	      (i  1  (1+ i)))
        ((or (>= i fp) (funcall fnp heap (aref a i)))
 	      i)))
 
+;;;  "Remove the minimum (first) element in the heap & return it.  It's
+;;; an error if the heap is already empty.  (Should that be an error?)"
 (defun heap-remove (heap &optional (fn #'default-search-predicate))
-  "Remove the minimum (first) element in the heap & return it.  It's
-an error if the heap is already empty.  (Should that be an error?)"
   (let ((a (heap-a heap))
 	      (i (heap-find-idx heap fn)))
     (cond ((< i (fill-pointer a)) ;; We found an element to remove.
@@ -763,15 +764,15 @@ an error if the heap is already empty.  (Should that be an error?)"
             when (funcall fn heap obj)
               collect obj))))
 
+;;;  "Return the first element in the heap, but don't remove it.  It'll
+;;; be an error if the heap is empty.  (Should that be an error?)"
 (defun heap-peek (heap)
-  "Return the first element in the heap, but don't remove it.  It'll
-be an error if the heap is empty.  (Should that be an error?)"
   (aref (heap-a heap) 1))
 
+;;;   "Return the index of the lesser child.  If there's one child,
+;;; return its index.  If there are no children, return 
+;;; (FILL-POINTER (HEAP-A HEAP))."
 (defun lesser-child (heap parent)
-  "Return the index of the lesser child.  If there's one child,
-return its index.  If there are no children, return 
-(FILL-POINTER (HEAP-A HEAP))."
   (let* ((a (heap-a heap))
          (left (* parent (heap-order heap)))
          (right (1+ left))
@@ -1300,8 +1301,8 @@ return its index.  If there are no children, return
       (values (first body) (rest body))
     (values nil body)))
 
+;;;  "Supports the parsing of embedded DEFRULE forms."
 (defun fixup-runtime-bindings (patterns)
-  "Supports the parsing of embedded DEFRULE forms."
   (labels ((fixup-bindings (part result)
              (let* ((token (first part))
                     (new-token token))
@@ -1345,8 +1346,8 @@ return its index.  If there are no children, return
   (loop for binding being the hash-values of *binding-table*
       collect binding))
 
+;;;  "Given a variable, either retrieve the binding object for it or create a new one."
 (defun find-or-set-slot-binding (var slot-name location)
-  "Given a variable, either retrieve the binding object for it or create a new one."
   (multiple-value-bind (binding existsp)
       (gethash var *binding-table*)
     (unless existsp
@@ -1356,8 +1357,8 @@ return its index.  If there are no children, return
     (values binding existsp)))
 
 ;;; bug:
+;;;  "Given a variable, retrieve the binding object for it."
 (defun find-slot-binding (var &key (errorp t))
-  "Given a variable, retrieve the binding object for it."
   (let ((binding (gethash var *binding-table*)))
     (when errorp
       (cl:assert binding nil "Missing slot binding for variable ~A" var))
@@ -1396,8 +1397,8 @@ return its index.  If there are no children, return
 
 ;;; the parsing code itself...
 
+;;;  "Parses a single slot constraint, eg. (slot-name ?var 1) or (slot-name ?var (equal ?var 1))"
 (defun parse-one-slot-constraint (var constraint-form)
-  "Parses a single slot constraint, eg. (slot-name ?var 1) or (slot-name ?var (equal ?var 1))"
   (let ((head (first constraint-form))
         (args (second constraint-form)))
     (cond ((eq head 'not)
@@ -1406,17 +1407,17 @@ return its index.  If there are no children, return
           (t
            (values constraint-form (collect-constraint-bindings constraint-form) nil)))))
 
+;;;  "Is the slot value a Lisa variable?"
 (defun slot-value-is-variable-p (value)
-  "Is the slot value a Lisa variable?"
   (variable-p value))
 
+;;;  "Is the slot value a simple constraint?"
 (defun slot-value-is-atom-p (value)
-  "Is the slot value a simple constraint?"
   (and (atom value)
        (not (slot-value-is-variable-p value))))
 
+;;;  "Is the slot value a simple negated constraint?"
 (defun slot-value-is-negated-atom-p (value)
-  "Is the slot value a simple negated constraint?"
   (and (consp value)
        (eq (first value) 'not)
        (slot-value-is-atom-p (second value))))
@@ -1426,14 +1427,14 @@ return its index.  If there are no children, return
        (eq (first value) 'not)
        (variable-p (second value))))
 
+;;;  "Is every variable in a pattern 'local'; i.e. does not reference a binding in a previous pattern?"
 (defun intra-pattern-bindings-p (bindings location)
-  "Is every variable in a pattern 'local'; i.e. does not reference a binding in a previous pattern?"
   (every #'(lambda (b)
              (= location (binding-address b)))
          bindings))
 
+;;;  "Parses a single raw pattern slot"
 (defun parse-one-slot (form location)
-  "Parses a single raw pattern slot"
   (with-slot-components (slot-name slot-value constraint) form
     (cond ((slot-value-is-atom-p slot-value)
            ;; eg. (slot-name "frodo")
@@ -2251,9 +2252,9 @@ return its index.  If there are no children, return
 (defun get-superclasses (meta-object)
   (fact-meta-object-superclasses meta-object))
 
+;;;  "Locates the META-FACT instance associated with SYMBOLIC-NAME. If ERRORP is
+;;;   non-nil, signals an error if no binding is found."
 (defun find-meta-fact (symbolic-name &optional (errorp t))
-  "Locates the META-FACT instance associated with SYMBOLIC-NAME. If ERRORP is
-  non-nil, signals an error if no binding is found."
   (let ((meta-fact (find-meta-object (inference-engine) symbolic-name)))
     (when errorp
       (cl:assert (not (null meta-fact)) nil
@@ -2438,17 +2439,16 @@ return its index.  If there are no children, return
   "Holds the results of query firings.")
 
 ;;; bug: todo: LISA ASSERT
+;;;  "Runs a query (RULE instance), and returns both the value of *QUERY-RESULT*
+;;;  and the query name itself."
 (defun run-query (query-rule)
-  "Runs a query (RULE instance), and returns both the value of *QUERY-RESULT*
-  and the query name itself."
-  ;;(declare (ignorable query-rule))
   (let ((*query-result* (list)))
     (assert (query-fact))
     (run)
     *query-result*))
 
+;;;  "Defines a new query identified by the symbol NAME."
 (defmacro defquery (name &body body)
-  "Defines a new query identified by the symbol NAME."
   `(define-rule ,name ',body))
 
 ;;; Queries fired by RETRIEVE collect their results in the special variable
@@ -2481,9 +2481,9 @@ return its index.  If there are no children, return
                                  *query-result*))))
            (run-query ,query))))))
 
+;;;  "For each variable/instance pair in a query result, invoke BODY with VAR
+;;;  bound to the query variable and VALUE bound to the instance."
 (defmacro with-simple-query ((var value) query &body body)
-  "For each variable/instance pair in a query result, invoke BODY with VAR
-  bound to the query variable and VALUE bound to the instance."
   (let ((result (gensym)))
     `(let ((,result ,query))
        (dolist (match ,result)

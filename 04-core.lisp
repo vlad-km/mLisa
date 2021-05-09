@@ -805,7 +805,7 @@
   ((heap :initarg :heap
          :reader heap)))
 
-;;; bug:
+;;; bug: not!
 (defmethod reset-activations ((self priority-queue-mixin))
   (heap:heap-clear (heap self)))
 
@@ -841,7 +841,7 @@
 
 ;;; bug:
 (defmethod find-activation ((self builtin-strategy) rule token)
-  (declare (ignore rule token))
+  ;;(declare (ignore rule token))
   (cl:assert nil nil "Why are we calling FIND-ACTIVATION?"))
 
 (defmethod find-all-activations ((self builtin-strategy) rule)
@@ -1244,7 +1244,7 @@
 (defun negated-pattern-p (pattern)
   (eq (parsed-pattern-type pattern) :negated))
 
-(error "ASSERT")
+;;;(error "ASSERT")
 ;;; bug:
 (defun parsed-pattern-test-forms (pattern)
   (cl:assert (test-pattern-p pattern) nil
@@ -2227,12 +2227,9 @@
     query-engine))
 
 ;;; File: belief-interface.lisp
-
-#+nil
 (defmethod belief:belief-factor ((self fact))
   (belief-factor self))
 
-#+nil
 (defmethod belief:belief-factor ((self rule))
   (belief-factor self))
 

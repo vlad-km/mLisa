@@ -384,6 +384,7 @@
 
 (error "LOOP HASH")
 
+#+nil
 (defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))
   (loop for right-token being the hash-values of (join-node-right-memory self)
         do (when (test-tokens self left-tokens right-token)
@@ -391,19 +392,49 @@
              (pass-tokens-to-successor 
               self (combine-tokens left-tokens right-token)))))
 
+(defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))
+  (maphash
+   (lambda (ignore right-token)
+     (when (test-tokens self left-tokens right-token)
+       (token-increment-exists-counter left-tokens)
+       (pass-tokens-to-successor 
+        self (combine-tokens left-tokens right-token))))
+   (join-node-right-memory self)))
+
+
+#+nil
 (defmethod test-against-right-memory ((self node2-exists) (left-tokens remove-token))
   (loop for right-token being the hash-values of (join-node-right-memory self)
         do (when (test-tokens self left-tokens right-token)
              (pass-tokens-to-successor 
               self (combine-tokens left-tokens right-token)))))
 
+(defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))
+  (maphash
+   (lambda (ignore right-token)
+     (when (test-tokens self left-tokens right-token)
+       (pass-tokens-to-successor 
+        self (combine-tokens left-tokens right-token))))
+   (join-node-right-memory self)))
+
+#+nil
 (defmethod test-against-left-memory ((self node2-exists) (right-token add-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
         do (when (and (test-tokens self left-tokens right-token)
                       (= (token-increment-exists-counter left-tokens) 1))
              (pass-tokens-to-successor 
               self (combine-tokens left-tokens right-token)))))
-  
+
+(defmethod test-against-left-memory ((self node2-exists) (right-token add-token))
+  (maphash
+   (lambda (ignore left-token)
+     (when (and (test-tokens self left-tokens right-token)
+                (= (token-increment-exists-counter left-tokens) 1))
+       (pass-tokens-to-successor 
+        self (combine-tokens left-tokens right-token))))
+   (join-node-left-memory self)))
+
+#+nil
 (defmethod test-against-left-memory ((self node2-exists) (right-token remove-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
         do (when (test-tokens self left-tokens right-token)
@@ -411,7 +442,17 @@
              (pass-tokens-to-successor
               self (combine-tokens
                     (make-remove-token left-tokens) right-token)))))
-  
+
+(defmethod test-against-left-memory ((self node2-exists) (right-token remove-token))
+  (maphash
+   (lambda (ignore left-token)
+     (when (test-tokens self left-tokens right-token)
+       (token-decrement-exists-counter left-tokens)
+       (pass-tokens-to-successor
+        self (combine-tokens
+              (make-remove-token left-tokens) right-token))))
+   (join-node-left-memory self)))
+
 (defmethod accept-tokens-from-left ((self node2-exists) (left-tokens add-token))
   (add-tokens-to-left-memory self left-tokens)
   (test-against-right-memory self left-tokens))
@@ -500,14 +541,21 @@
                 (make-intra-pattern-test slot)))))
     (make-node1 test)))
 
-(error "LOOP HASH")
+#+nil
 (defun distribute-token (rete-network token)
   (loop for root-node being the hash-values 
       of (rete-roots rete-network)
       do (accept-token root-node token)))
 
+(defun distribute-token (rete-network token)
+  (maphash
+   (lambda (ignore root-node)
+     (accept-token root-node token))
+   (rete-roots rete-network)))
+
+
 ;;; note: woooooow
-(error "make-rete-network")
+;;;(error "make-rete-network")
 (defmethod make-rete-network (&rest args &key &allow-other-keys)
   (apply #'make-instance 'rete-network args))
 
@@ -657,10 +705,16 @@
      (make-dependency-set left-tokens (join-node-logical-block self)))))
 
 ;;; File: network-ops.lisp
-(error "loop hash-values")
+;;;(error "loop hash-values")
+#+nil
 (defun add-token-to-network (rete-network token-ctor)
   (loop for root-node being the hash-values of (rete-roots rete-network)
       do (accept-token root-node (funcall token-ctor))))
+
+(defun add-token-to-network (rete-network token-ctor)
+  (maphash (lambda (ignore root-node)
+             (accept-token root-node (funcall token-ctor)))
+           (rete-roots rete-network)))
 
 (defun add-fact-to-network (rete-network fact)
   (add-token-to-network
@@ -780,10 +834,10 @@
                        existing-root 
                        (shared-node-all-successors new-root)))))))
     (let ((*node-set* (list)))
-      ;;; bug: todo: loop hash-value
-      (loop for new-root being the hash-values of (rete-roots from-rete)
-            do (merge-root-node new-root))
+;;; bug: todo: loop hash-value
+      (maphash (lambda (ignore new-root) (merge-root-node new-root)) (rete-roots from-rete))
       (nreverse *node-set*))))
+
 
 ;;; File: network-crawler.lisp
 #+nil

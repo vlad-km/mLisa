@@ -154,7 +154,7 @@
 ;;;  running within the context of WITH-INFERENCE-ENGINE."
 (defun current-engine (&optional (errorp t))
   (when errorp
-    (cl:assert (not (null *active-engine*)) (*active-engine*)
+    (assert (not (null *active-engine*)) (*active-engine*)
       "The current inference engine has not been established."))
   *active-engine*)
 
@@ -389,9 +389,6 @@
         (initialize-fact-from-instance self instance meta-data))
     self))
 
-;;; bug:
-(error "ASSERT!")
-
 (defun initialize-fact-from-template (fact slots meta-data)
 ;;;  "Initializes a template-bound FACT. An instance of the FACT's associated
 ;;;  class is created and the slots of both are synchronized from the SLOTS
@@ -399,7 +396,7 @@
   (let ((instance
          (make-instance (find-class (get-class-name meta-data) nil))))
     ;; bug:
-    (cl:assert (not (null instance)) nil
+    (assert (not (null instance)) nil
       "No class was found corresponding to fact name ~S." (fact-name fact))
     (setf (slot-value fact 'clos-instance) instance)
     (mapc #'(lambda (slot-spec)
@@ -842,7 +839,7 @@
 ;;; bug:
 (defmethod find-activation ((self builtin-strategy) rule token)
   ;;(declare (ignore rule token))
-  (cl:assert nil nil "Why are we calling FIND-ACTIVATION?"))
+  (assert nil nil "Why are we calling FIND-ACTIVATION?"))
 
 (defmethod find-all-activations ((self builtin-strategy) rule)
   (lookup-activations self rule))
@@ -1086,10 +1083,10 @@
 (defun auto-focus-p (rule)
   (rule-auto-focus rule))
 
-(error "ASSERT")
+;;;(error "ASSERT")
 (defun find-any-logical-boundaries (patterns)
   (flet ((ensure-logical-blocks-are-valid (addresses)
-           (cl:assert (and (= (first (last addresses)) 1)
+           (assert (and (= (first (last addresses)) 1)
                            (eq (parsed-pattern-class (first patterns))
                                'initial-fact)) nil
              "Logical patterns must appear first within a rule.")
@@ -1100,7 +1097,7 @@
            ;; onto the list ADDRESSES, and therefore are in reverse order
            (reduce #'(lambda (second first)
                        ;; bug: ASSERT
-                       (cl:assert (= second (1+ first)) nil
+                       (assert (= second (1+ first)) nil
                          "All logical patterns within a rule must be contiguous.")
                        second)
                    addresses :from-end t)))
@@ -1247,7 +1244,7 @@
 ;;;(error "ASSERT")
 ;;; bug:
 (defun parsed-pattern-test-forms (pattern)
-  (cl:assert (test-pattern-p pattern) nil
+  (assert (test-pattern-p pattern) nil
     "This pattern is not a test pattern: ~S" pattern)
   (parsed-pattern-slots pattern))
 
@@ -1358,12 +1355,12 @@
 (defun find-slot-binding (var &key (errorp t))
   (let ((binding (gethash var *binding-table*)))
     (when errorp
-      (cl:assert binding nil "Missing slot binding for variable ~A" var))
+      (assert binding nil "Missing slot binding for variable ~A" var))
     binding))
 
 ;;; bug:
 (defun set-pattern-binding (var location)
-  (cl:assert (not (gethash var *binding-table*)) nil "This is a duplicate pattern binding: ~A" var)
+  (assert (not (gethash var *binding-table*)) nil "This is a duplicate pattern binding: ~A" var)
   (setf (gethash var *binding-table*)
     (make-binding var location :pattern)))
 
@@ -1708,7 +1705,7 @@
           body))
 
 ;;; todo: bug: ASSERT
-(defmacro assert ((name &body body) &key (belief nil))
+(defmacro assert> ((name &body body) &key (belief nil))
   (let ((fact (gensym))
         (fact-object (gensym)))
     `(let ((,fact-object 
@@ -1847,7 +1844,7 @@
 ;;; File: rete.lisp
 ;;; Description: Class representing the inference engine itself.
 
-(error "EQUALP")
+;;;(error "EQUALP")
 (defclass rete ()
   ((fact-table :initform (make-hash-table :test #'equalp)
                :accessor rete-fact-table)
@@ -1924,7 +1921,7 @@
                  (find-all-activations
                   (context-strategy (rule-context rule)) rule))))
     (let ((rule (find-rule self rule-name)))
-      (cl:assert (not (null rule)) nil
+      (assert (not (null rule)) nil
         "The rule named ~S is not known to be defined." rule-name)
       (remove-rule-from-network (rete-network self) rule)
       (remove-rule-from-context (rule-context rule) rule)
@@ -2051,7 +2048,7 @@
 
 (defmethod retract-fact ((self rete) (instance standard-object))
   (let ((fact (find-fact-using-instance self instance)))
-    (cl:assert (not (null fact)) nil
+    (assert (not (null fact)) nil
       "This CLOS instance is unknown to LISA: ~S" instance)
     (retract-fact self fact)))
 
@@ -2093,7 +2090,7 @@
 (defmethod reset-engine ((self rete))
   (reset-network (rete-network self))
   (set-initial-state self)
-  (assert (initial-fact))
+  (assert> (initial-fact))
   (assert-autofacts self)
   t)
 
@@ -2251,7 +2248,7 @@
 (defun find-meta-fact (symbolic-name &optional (errorp t))
   (let ((meta-fact (find-meta-object (inference-engine) symbolic-name)))
     (when errorp
-      (cl:assert (not (null meta-fact)) nil
+      (assert (not (null meta-fact)) nil
         "This fact name does not have a registered meta class: ~S"
         symbolic-name))
     meta-fact))
@@ -2299,16 +2296,13 @@
              (when (find-class class-name nil)
                (acquire-meta-data class-name)
                (return))
-             (cerror "Enter a template definition now."
-                     "LISA doesn't know about the template named by (~S)." class-name)
-             (format t "Enter a DEFTEMPLATE form: ")
-             (eval (read))
-             (fresh-line))))
+             (error  "LISA doesn't know about the template named by (~S)." class-name)
+             )))
     (let ((meta-data (find-meta-object (inference-engine) class-name)))
       (when (null meta-data)
         (ensure-class-definition)
         (setf meta-data 
-          (find-meta-object (inference-engine) class-name)))
+              (find-meta-object (inference-engine) class-name)))
       meta-data)))
 
 ;;; File: binding.lisp
@@ -2348,7 +2342,7 @@
 
 ;;; bug: assert
 (defun token-decrement-exists-counter (token)
-  (cl:assert (plusp (token-exists-counter token)) nil
+  (assert (plusp (token-exists-counter token)) nil
     "The EXISTS join node logic is busted.")
   (decf (token-exists-counter token)))
 
@@ -2356,7 +2350,7 @@
   (values token (incf (token-not-counter token))))
 
 (defun token-decrement-not-counter (token)
-  (cl:assert (plusp (token-not-counter token)) nil
+  (assert (plusp (token-not-counter token)) nil
     "The negated join node logic is busted.")
   (values token (decf (token-not-counter token))))
 
@@ -2437,7 +2431,7 @@
 ;;;  and the query name itself."
 (defun run-query (query-rule)
   (let ((*query-result* (list)))
-    (assert (query-fact))
+    (assert> (query-fact))
     (run)
     *query-result*))
 

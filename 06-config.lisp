@@ -56,13 +56,6 @@
 (eval-when (:load-toplevel :execute)
   (make-default-inference-engine)
   (setf *active-context* (initial-context (inference-engine)))
-  #+nil (define-lisa-lisp)
-  #+nil
-  (when (use-fancy-assert)
-    (set-dispatch-macro-character
-     #\# #\? #'(lambda (strm subchar arg)
-                 (declare (ignore subchar arg))
-                 (list 'identity (read strm t nil t)))))
   (pushnew :lisa *features*))
 
 

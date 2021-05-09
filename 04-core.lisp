@@ -1864,7 +1864,7 @@
 
 ;;;(error "EQUALP")
 (defclass rete ()
-  ((fact-table :initform (make-hash-table :test #'equalp)
+  ((fact-table :initform (make-hash-table :test #'equal)
                :accessor rete-fact-table)
    (fact-id-table :initform (make-hash-table)
                   :accessor fact-id-table)

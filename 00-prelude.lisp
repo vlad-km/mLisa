@@ -39,20 +39,6 @@
   (typecase x
     (number (and (numberp y) (= x y)))
     (character (and (characterp y) (char-equal x y)))
-    (cons (and (consp y)
-               (equalp (car x) (car y))
-               (equalp (cdr x) (cdr y))))
-    (vector (and (vectorp y)
-                 (let ((lx (length x)))
-                   (= lx (length y))
-                   (dotimes (i lx t)
-                     (when (not (equalp (aref x i) (aref y i)))
-                       (return nil))))))
-    (array (and (arrayp y)
-                (equalp (array-dimensions x) (array-dimensions y))
-                (dotimes (i (length x) t)
-                  (when (not (equalp (aref x i) (aref y i)))
-                    (return nil)))))
     (hash-table
      (and (hash-table-p y)
           (eql (hash-table-count x)(hash-table-count y))
@@ -60,14 +46,31 @@
           (block nil
             (if (= (hash-table-count x) 0)
                 t
-              (maphash (lambda (k v)
-                         (multiple-value-bind (other-v presentp)
-                             (gethash k y)
-                           (when (or (not presentp)
-                                     (not (equalp v other-v)))
-                             (return nil))))
-                       x)
-              t))))
+                (maphash
+                 (lambda (k v)
+                   (multiple-value-bind (other-v present-p)
+                       (gethash k y)
+                     (when (or (not present-p)
+                               (not (equalp v other-v)))
+                       (return nil))))
+                 x)  ))))
+    (cons
+     (and (consp y)
+          (equalp (car x) (car y))
+          (equalp (cdr x) (cdr y))))
+    (vector
+     (and (vectorp y)
+          (let ((lex (length x)))
+            (= lex (length y))
+            (dotimes (i lex t)
+              (when (not (equalp (aref x i) (aref y i)))
+                (return nil))))))
+    (array
+     (and (arrayp y)
+          (equalp (array-dimensions x) (array-dimensions y))
+          (dotimes (i (length x) t)
+            (when (not (equalp (aref x i) (aref y i)))
+              (return nil)))))
     (t (equal x y))))
 
 

@@ -382,7 +382,7 @@
 ;;; File: node2-exists.lisp
 (defclass node2-exists (join-node) ())
 
-(error "LOOP HASH")
+;;;(error "LOOP HASH")
 
 #+nil
 (defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))

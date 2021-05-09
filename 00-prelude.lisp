@@ -18,6 +18,22 @@
   (unless (find-package :heap)
     (make-package :heap :use (list 'cl))))
 
+(defun assert-error (form datum &rest args)
+  (error
+   (if datum
+       (jscl::%%coerce-condition 'simple-error datum args)
+		 (make-condition 'simple-error
+				             :format-control "Assert failed: ~s."
+				             :format-arguments (list form)))))
+
+(defmacro assert (test &optional ignore datum &rest args)
+  (let ((value (gensym "ASSERT-VALUE"))
+        (name (gensym "ASSERT-BLOCK")))
+    `(block
+         ,name
+       (let ((,value ,test))
+         (when (not ,value)
+           (assert-error ',test ,datum ,@args))))))
 
 
 ;;; EOF

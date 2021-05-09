@@ -19,14 +19,22 @@
 (defgeneric adjust-belief (objects rule-belief &optional old-belief))
 (defgeneric belief->english (belief-factor))
 
-;;; File: certainty-factors.lisp
-;;; Description: An implementation of Certainty Factors as found in Peter Norvig's PAIP.
+;;; File: null-belief-system.lisp
 
+;;; interface into the generic belief system.
 
-;;;
-(defconstant +true+ 1.0000000001)
-(defconstant +false+ -1.00000001)
-(defconstant +unknown+ 0.0000000001)
+(defmethod belief-factor ((obj t))
+  nil)
+
+(defmethod adjust-belief ((objects t) (rule-belief t) &optional (old-belief nil))
+  nil)
+
+(defmethod belief->english ((belief t))
+  nil)
+
+(defconstant +true+ 1.0)
+(defconstant +false+ -1.0)
+(defconstant +unknown+ 0.0)
 
 (defun certainty-factor-p (number)
   (<= +false+ number +true+))
@@ -62,32 +70,31 @@
 ;;;  "Combines the certainty factors of objects matched within a single rule."
 (defun conjunct-cf (objects)
   (let ((conjuncts
-          (loop for obj in objects
-                for cf = (belief-factor obj)
-                if cf collect cf)))
+         (loop for obj in objects
+               for cf = (belief-factor obj)
+               if cf collect cf)))
     (if conjuncts
         (apply #'min conjuncts)
-        nil)))
+      nil)))
 
-;;; todo: reduce to (defun recalculate-cf)
 (defgeneric recalculate-cf (objects rule-cf old-cf))
 
 (defmethod recalculate-cf (objects (rule-cf number) (old-cf number))
-  (let* ((combined-cf (conjunct-cf objects))
-         (new-cf (if combined-cf (* rule-cf combined-cf) rule-cf)))
-    (cf-combine old-cf new-cf)))
+   (let* ((combined-cf (conjunct-cf objects))
+          (new-cf (if combined-cf (* rule-cf combined-cf) rule-cf)))
+     (cf-combine old-cf new-cf)))
 
 (defmethod recalculate-cf (objects (rule-cf number) (old-cf t))
-  (let* ((combined-cf (conjunct-cf objects))
-         (new-cf (if combined-cf combined-cf rule-cf))
-         (factor (if combined-cf rule-cf 1.0)))
-    (* new-cf factor)))
+   (let* ((combined-cf (conjunct-cf objects))
+          (new-cf (if combined-cf combined-cf rule-cf))
+          (factor (if combined-cf rule-cf 1.0)))
+     (* new-cf factor)))
 
 (defmethod recalculate-cf (objects (rule-cf t) (old-cf t))
-  (let* ((combined-cf (conjunct-cf objects)))
-    (if combined-cf
-        (* combined-cf 1.0)
-        nil)))
+   (let* ((combined-cf (conjunct-cf objects)))
+     (if combined-cf
+         (* combined-cf 1.0)
+       nil)))
 
 (defun cf->english (cf)
   (cond ((= cf 1.0) "certain evidence")
@@ -95,27 +102,17 @@
         ((> cf 0.5) "suggestive evidence")
         ((> cf 0.0) "weakly suggestive evidence")
         ((= cf 0.0) "no evidence either way")
-        ((< cf 0.0) (jscl::concat (cf->english (- cf)) " against the conclusion"))))
+        ((< cf 0.0) (concatenate 'string (cf->english (- cf)) " against the conclusion"))))
 
-;;; interface into the generic belief system.
-;;; todo: reduce to defun
 (defmethod adjust-belief (objects (rule-belief number) &optional (old-belief nil))
   (recalculate-cf objects rule-belief old-belief))
 
 (defmethod adjust-belief (objects (rule-belief t) &optional old-belief)
-;;;  (declare (ignore objects old-belief))
+  (declare (ignore objects old-belief))
   nil)
 
 (defmethod belief->english ((cf number))
   (cf->english cf))
-
-(error "Where primary belief method?")
-
-(defmethod belief-factor ((self fact))
-  (belief-factor self))
-
-(defmethod belief-factor ((self rule))
-  (belief-factor self))
 
 (export '(belief::ADJUST-BELIEF belief::BELIEF->ENGLISH
            belief::BELIEF-FACTOR belief::FALSE-P belief::TRUE-P belief::UKNOWN-P))

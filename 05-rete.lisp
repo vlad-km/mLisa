@@ -30,7 +30,7 @@
 (defgeneric test-against-right-memory (node2 left-tokens))
 ;;;(defgeneric remove-node-from-parent (rete-network parent child))
 (defgeneric add-successor (parent new-node connector))
-(defgeneric decrement-use-count (join-node))
+;;;(defgeneric decrement-use-count (join-node))
 ;;;(defgeneric find-existing-successor (shared-node  node1))
 ;;;(defgeneric add-node-set (parent node &optional count-p ))
 
@@ -61,6 +61,7 @@
 (defmethod increment-use-count ((self shared-node))
   (incf (shared-node-refcnt self)))
 
+#+nil
 (defmethod decrement-use-count ((self shared-node))
   (decf (shared-node-refcnt self)))
 
@@ -681,6 +682,7 @@
   (typecase node
     (join-node 0)
     (terminal-node 0)
+    (shared-node (decf (shared-node-refcnt node)))
     (t (error "WTF ~a node?" node))))
 
 (defun remove-rule-from-network (rete-network rule)

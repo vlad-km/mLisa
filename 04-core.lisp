@@ -2471,14 +2471,20 @@
 (defmethod hash-key ((self token))
   (token-hash-code self))
 
+(defgeneric make-add-token (fact))
+
 (defmethod make-add-token ((fact fact))
   (token-push-fact (make-instance 'add-token) fact))
+
+(defgeneric make-remove-token (token))
 
 (defmethod make-remove-token ((fact fact))
   (token-push-fact (make-instance 'remove-token) fact))
 
 (defmethod make-remove-token ((token token))
   (replicate-token token :token-class 'remove-token))
+
+(defgeneric make-reset-token (fact))
 
 (defmethod make-reset-token ((fact t))
   (token-push-fact (make-instance 'reset-token) t))

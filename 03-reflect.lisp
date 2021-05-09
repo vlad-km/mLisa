@@ -11,7 +11,7 @@
 ;;; Modification for JSCL under Electron platform
 ;;; Copyright (C) 2021 Vladimir K. Mezentsev (@vlad-km)
 
-;;(in-package :reflect)
+(in-package :reflect)
 
 (defun class-slots* (obj)
   (class-slots
@@ -78,4 +78,7 @@
                 class-or-symbol)))
       (nreverse (find-superclasses (find-direct-superclasses class) nil)))))
 
+(export '(reflect::class-slot-list reflect::class-slot-initargs reflect::find-direct-superclasses reflect::class-all-superclasses))
+
+(in-package :cl-user)
 ;;; EOF

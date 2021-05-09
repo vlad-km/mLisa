@@ -228,6 +228,7 @@
 
 ;;; "This class represents 'autoloaded' facts that are asserted automatically
 ;;;  as part of an inference engine reset."
+
 (defclass deffacts ()
   ((name :initarg :name
          :reader deffacts-name)

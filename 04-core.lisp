@@ -36,6 +36,7 @@
 (defgeneric reset-activations (self))
 (defgeneric insert-activation (self activation))
 (defgeneric lookup-activation (self rule tokens))
+(defgeneric lookup-activations (priority-queue-mixin rule))
 (defgeneric get-next-activation (self))
 (defgeneric get-all-activations (self))
 (defgeneric add-activation (self activation))
@@ -810,16 +811,19 @@
   (heap:heap-insert (heap self) activation))
 
 (defmethod lookup-activation ((self priority-queue-mixin) rule tokens)
-  (heap:heap-find (heap self) #'(lambda (heap activation)
-                                  (declare (ignore heap))
-                                  (and (equal (hash-key activation) (hash-key tokens))
-                                       (eq (activation-rule activation) rule)))))
+  (heap:heap-find (heap self)
+                  #'(lambda (heap activation)
+                      (declare (ignore heap))
+                      (and (equal (hash-key activation) (hash-key tokens))
+                           (eq (activation-rule activation) rule)))))
 
 (defmethod lookup-activations ((self priority-queue-mixin) rule)
-  (heap:heap-collect (heap self) #'(lambda (heap activation)
-                                     (declare (ignore heap))
-                                     (and activation
-                                          (eq rule (activation-rule activation))))))
+  (heap:heap-collect
+   (heap self)
+   #'(lambda (heap activation)
+       (declare (ignore heap))
+       (and activation
+            (eq rule (activation-rule activation))))))
 
 (defmethod get-next-activation ((self priority-queue-mixin))
   (heap:heap-remove (heap self)))
@@ -929,9 +933,17 @@
 (defun context-activation-list (context)
   (list-activations (context-strategy context)))
 
+#+nil
 (defun context-rule-list (context)
   (loop for rule being the hash-values of (context-rules context)
       collect rule))
+
+(defun context-rule-list (context)
+  (let ((collection))
+    (maphash (lambda (nothing rule) (push rule collection)) (context-rules context))
+    (reverse collection)))
+
+
 
 (defun clear-context (context)
   (clear-activations context)
@@ -1336,9 +1348,14 @@
            (,constraint (third ,form)))
        ,@body)))
 
+#+nil
 (defun make-binding-set ()
   (loop for binding being the hash-values of *binding-table*
       collect binding))
+
+(defun make-binding-set ()
+  (jscl::hash-table-values *binding-table*))
+
 
 ;;;  "Given a variable, either retrieve the binding object for it or create a new one."
 (defun find-or-set-slot-binding (var slot-name location)
@@ -1956,11 +1973,19 @@
   (clrhash (rete-fact-table rete))
   (clrhash (fact-id-table rete)))
 
+#+nil
 (defun get-fact-list (rete)
   (delete-duplicates
    (sort
     (loop for fact being the hash-values of (rete-fact-table rete)
         collect fact)
+    #'(lambda (f1 f2) (< (fact-id f1) (fact-id f2))))))
+
+;;; note: very bottleneck
+(defun get-fact-list (rete)
+  (delete-duplicates
+   (sort
+    (jscl::hash-table-values (rete-fact-table rete))
     #'(lambda (f1 f2) (< (fact-id f1) (fact-id f2))))))
 
 (defun duplicate-fact-p (rete fact)
@@ -2065,9 +2090,13 @@
   (assert-fact self fact)
   fact)
 
+#+nil
 (defun clear-contexts (rete)
   (loop for context being the hash-values of (rete-contexts rete)
       do (clear-activations context)))
+
+(defun clear-contexts (rete)
+  (maphash (lambda (nothing context) (clear-activations context)) (rete-contexts rete)))
 
 (defun clear-focus-stack (rete)
   (setf (rete-focus-stack rete) (list)))
@@ -2094,12 +2123,21 @@
   (assert-autofacts self)
   t)
 
+#+nil
 (defun get-rule-list (rete &optional (context-name nil))
   (if (null context-name)
       (loop for context being the hash-values of (rete-contexts rete)
           append (context-rule-list context))
     (context-rule-list (find-context rete context-name))))
 
+
+(defun get-rule-list (rete &optional (context-name nil))
+  (if (null context-name)
+      (loop for context in (jscl::hash-table-values (rete-contexts rete))
+            append (context-rule-list context))
+      (context-rule-list (find-context rete context-name))))
+
+#+nil
 (defun get-activation-list (rete &optional (context-name nil))
   (if (not context-name)
       (loop for context being the hash-values of (rete-contexts rete)
@@ -2107,6 +2145,16 @@
             when activations
               nconc activations)
     (context-activation-list (find-context rete context-name))))
+
+(defun get-activation-list (rete &optional (context-name nil))
+  (if (not context-name)
+      (loop for context in (jscl::hash-table-values (rete-contexts rete))
+            for activations = (context-activation-list context)
+            when activations
+              nconc activations)
+      (context-activation-list (find-context rete context-name))))
+
+
 
 (defun find-fact-using-instance (rete instance)
   (gethash instance (rete-instance-table rete)))
@@ -2167,9 +2215,14 @@
 (defun pop-context (rete)
   (next-context rete))
 
+#+nil
 (defun retrieve-contexts (rete)
   (loop for context being the hash-values of (rete-contexts rete)
       collect context))
+
+(defun retrieve-contexts (rete)
+  (loop for context in (jscl::hash-table-values (rete-contexts rete)) collect context))
+
 
 (defmethod add-activation ((self rete) activation)
   (let ((rule (activation-rule activation)))
@@ -2217,11 +2270,20 @@
           (get-rule-list engine))
     new-engine))
 
+#+nil
 (defun make-query-engine (source-rete)
   (let* ((query-engine (make-inference-engine)))
     (loop for fact being the hash-values of (rete-fact-table source-rete)
         do (remember-fact query-engine fact))
     query-engine))
+
+(defun make-query-engine (source-rete)
+  (let* ((query-engine (make-inference-engine)))
+    (maphash (lambda (ignore fact)
+               (remember-fact query-engine fact))
+             (rete-fact-table source-rete))
+    query-engine))
+
 
 ;;; File: belief-interface.lisp
 (defmethod belief:belief-factor ((self fact))

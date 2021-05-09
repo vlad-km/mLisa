@@ -102,7 +102,7 @@
         ((> cf 0.5) "suggestive evidence")
         ((> cf 0.0) "weakly suggestive evidence")
         ((= cf 0.0) "no evidence either way")
-        ((< cf 0.0) (concatenate 'string (cf->english (- cf)) " against the conclusion"))))
+        ((< cf 0.0) (jscl::concat (cf->english (- cf)) " against the conclusion"))))
 
 (defmethod adjust-belief (objects (rule-belief number) &optional (old-belief nil))
   (recalculate-cf objects rule-belief old-belief))

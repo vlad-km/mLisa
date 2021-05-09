@@ -10,7 +10,6 @@
 
 ;;; File: node2-test.lisp
 
-(defgeneric accept-tokens-from-left (self left))
 (defgeneric increment-use-count (shared-node))
 ;;;(defgeneric decrement-use-count (shared-node))
 (defgeneric node-use-count (shared-node))
@@ -26,14 +25,28 @@
 (defgeneric add-successor (join-node successor-node connector))
 (defgeneric join-node-add-test (join-node test))
 (defgeneric clear-memories (join-node))
+(defgeneric accept-tokens-from-left (node token))
+(defgeneric accept-token-from-left (join-node reset-token))
 (defgeneric accept-token-from-right (join-node reset-token))
 (defgeneric test-against-right-memory (node2 left-tokens))
+(defgeneric test-against-left-memory (node2 add-token))
 ;;;(defgeneric remove-node-from-parent (rete-network parent child))
 (defgeneric add-successor (parent new-node connector))
 ;;;(defgeneric decrement-use-count (join-node))
 ;;;(defgeneric find-existing-successor (shared-node  node1))
 ;;;(defgeneric add-node-set (parent node &optional count-p ))
 
+(defclass join-node ()
+  ((successor :initform nil
+              :accessor join-node-successor)
+   (logical-block :initform nil
+                  :reader join-node-logical-block)
+   (tests :initform (list)
+          :accessor join-node-tests)
+   (left-memory :initform (make-hash-table :test #'equal)
+                :reader join-node-left-memory)
+   (right-memory :initform (make-hash-table :test #'equal)
+                 :reader join-node-right-memory)))
 
 (defclass node2-test (join-node) ())
 
@@ -191,6 +204,7 @@
 
 
 ;;; File: join-node.lisp
+#+nil
 (defclass join-node ()
   ((successor :initform nil
               :accessor join-node-successor)

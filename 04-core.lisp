@@ -1138,7 +1138,8 @@
                        (belief nil)
                        (compiled-behavior nil))
   (flet ((make-rule-binding-set ()
-           (delete-duplicates
+           ;;(delete-duplicates
+           (remove-duplicates
             (loop for pattern in patterns
                 append (parsed-pattern-binding-set pattern)))))
     (compile-rule

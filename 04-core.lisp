@@ -1465,6 +1465,7 @@
 ;;;  "Parses a single raw pattern slot"
 (defun parse-one-slot (form location)
   (with-slot-components (slot-name slot-value constraint) form
+    (print (list 'components slot-name slot-value constraint))
     (cond ((slot-value-is-atom-p slot-value)
            ;; eg. (slot-name "frodo")
            (make-pattern-slot :name slot-name :value slot-value))
@@ -1505,8 +1506,10 @@
   (let ((location 0)
         (patterns (list)))
     (labels ((parse-lhs (pattern-list)
+               (print (list '==> pattern-list))
                (let ((pattern (first pattern-list))
                      (*current-defrule-pattern-location* location))
+                 (print (list 'pattern pattern))
                  (unless (listp pattern)
                    (error 'rule-parsing-error
                           :text "pattern is not a list"
@@ -1517,9 +1520,11 @@
                         (unless *in-logical-pattern-p* (nreverse patterns)))
                        ;; logical CEs are "special"; they don't have their own parser.
                        ((logical-element-p pattern)
+                        (print 'logical)
                         (let ((*in-logical-pattern-p* t))
                           (parse-lhs (rest pattern))))
                        (t
+                        (print 'common)
                         (push (funcall (find-conditional-element-parser (first pattern)) pattern
                                        (1- (incf location)))
                               patterns)
@@ -1530,6 +1535,9 @@
                 :actions actions)))
       (multiple-value-bind (lhs remains)
           (lilu:find-before *rule-separator* body :test #'eq)
+        (print (list 'lhs lhs 'rem remains))
+        (print (list 'left-side (parse-lhs (preprocess-left-side lhs))))
+        (print (list 'right-side (parse-rhs (lilu:find-after *rule-separator* remains :test #'eq))))
         (unless remains
           (error 'rule-parsing-error :text "missing rule separator"))
         (values (parse-lhs (preprocess-left-side lhs))
@@ -1606,6 +1614,18 @@
                :context context
                :belief belief
                :auto-focus auto-focus))
+
+#+nil
+(defun redefine-defrule (name body &key (salience 0) (context nil) (belief nil) (auto-focus nil))
+  (print name)
+  (print body)
+  (define-rule name body :salience salience
+    :context context
+    :belief belief
+    :auto-focus auto-focus))
+
+
+
 
 ;;; File: fact-parser.lisp
 

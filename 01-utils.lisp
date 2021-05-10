@@ -35,7 +35,7 @@
 ;;;  the rest of SEQUENCE anchored at ITEM, or NIL otherwise."
 (defun find-before (item sequence &key (test #'eql))
   (labels ((find-item (obj seq test val valend)
-	     (let ((item (first seq)))
+	           (let ((item (first seq)))
                (cond ((null seq)
                       (values nil nil))
                      ((funcall test obj item)
@@ -46,8 +46,8 @@
                         (find-item obj (rest seq) test val newend)))))))
     (if (funcall test item (car sequence))
         (values nil sequence)
-      (let ((head (list (car sequence))))
-        (find-item item (cdr sequence) test head head)))))
+        (let ((head (list (car sequence))))
+          (find-item item (cdr sequence) test head head)))))
 
 ;;;  "Returns that portion of SEQUENCE that occurs after ITEM, or NIL
 ;;;  otherwise."

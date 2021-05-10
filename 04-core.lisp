@@ -379,6 +379,7 @@
 ;;;  INSTANCE is NIL then FACT is associated with a template and a suitable
 ;;;  instance must be created; otherwise FACT is bound to a user-defined class."
 
+#+nil
 (defmethod initialize-instance :after ((self fact) &key (slots nil) (instance nil))
   (with-slots ((slot-table slot-table)
                (meta-data meta-data)) self
@@ -390,6 +391,22 @@
         (initialize-fact-from-template self slots meta-data)
         (initialize-fact-from-instance self instance meta-data))
     self))
+
+(defmethod initialize-instance :after ((self fact) &rest all-keys)
+  (let ((slots (jscl::get-keyword-from all-keys :slots nil))
+        (instance (jscl::get-keyword-from all-keys :instance nil)))
+    (with-slots ((slot-table slot-table)
+                 (meta-data meta-data)) self
+      (setf meta-data (find-meta-fact (fact-name self)))
+      (mapc #'(lambda (slot-name)
+                (setf (gethash slot-name slot-table) nil))
+            (get-slot-list meta-data))
+      (if (null instance)
+          (initialize-fact-from-template self slots meta-data)
+          (initialize-fact-from-instance self instance meta-data))
+      self)))
+
+
 
 (defun initialize-fact-from-template (fact slots meta-data)
 ;;;  "Initializes a template-bound FACT. An instance of the FACT's associated
@@ -814,7 +831,7 @@
 (defmethod lookup-activation ((self priority-queue-mixin) rule tokens)
   (heap:heap-find (heap self)
                   #'(lambda (heap activation)
-                      (declare (ignore heap))
+                      ;;(declare (ignore heap))
                       (and (equal (hash-key activation) (hash-key tokens))
                            (eq (activation-rule activation) rule)))))
 
@@ -822,7 +839,7 @@
   (heap:heap-collect
    (heap self)
    #'(lambda (heap activation)
-       (declare (ignore heap))
+       ;;(declare (ignore heap))
        (and activation
             (eq rule (activation-rule activation))))))
 
@@ -830,9 +847,8 @@
   (heap:heap-remove (heap self)))
 
 (defmethod get-all-activations ((self priority-queue-mixin))
-  (heap:heap-collect (heap self) (lambda (heap activation)
-                                   (declare (ignore heap))
-                                   activation)))
+  (heap:heap-collect (heap self)
+                     (lambda (heap activation) activation)))
 
 ;;; "A base class for all LISA builtin conflict resolution strategies."
 (defclass builtin-strategy (strategy priority-queue-mixin)
@@ -1123,7 +1139,7 @@
       (first addresses))))
 
 (defmethod initialize-instance :after ((self rule) &rest initargs)
-  (declare (ignore initargs))
+  ;;(declare (ignore initargs))
   (with-slots ((qual-name qualified-name)) self
     (setf qual-name
       (intern (format nil "~A.~A" 
@@ -1891,7 +1907,7 @@
                  :accessor rete-firing-count)))
 
 (defmethod initialize-instance :after ((self rete) &rest initargs)
-  (declare (ignore initargs))
+  ;;(declare (ignore initargs))
   (register-new-context self (make-context :initial-context))
   (reset-focus-stack self)
   self)
@@ -1953,20 +1969,39 @@
 (defmethod forget-rule ((self rete) (rule-name string))
   (forget-rule self (find-symbol rule-name)))
 
+#+nil
 (defun remember-fact (rete fact)
   (with-accessors ((fact-table rete-fact-table)
                    (id-table fact-id-table)) rete
     (setf (gethash (hash-key fact) fact-table) fact)
     (setf (gethash (fact-id fact) id-table) fact)))
 
+(defun remember-fact (rete fact)
+  (with-accessors ((fact-table rete-fact-table)
+                   (id-table fact-id-table)) rete
+    (setf (gethash (hash-key fact) fact-table) fact)
+    (setf (gethash (string (fact-id fact)) id-table) fact)))
+
+#+nil
 (defun forget-fact (rete fact)
   (with-accessors ((fact-table rete-fact-table)
                    (id-table fact-id-table)) rete
     (remhash (hash-key fact) fact-table)
     (remhash (fact-id fact) id-table)))
 
+(defun forget-fact (rete fact)
+  (with-accessors ((fact-table rete-fact-table)
+                   (id-table fact-id-table)) rete
+    (remhash (hash-key fact) fact-table)
+    (remhash (string (fact-id fact)) id-table)))
+
+#+nil
 (defun find-fact-by-id (rete fact-id)
   (gethash fact-id (fact-id-table rete)))
+
+(defun find-fact-by-id (rete fact-id)
+  (gethash (string fact-id) (fact-id-table rete)))
+
 
 (defun find-fact-by-name (rete fact-name)
   (gethash fact-name (rete-fact-table rete)))
@@ -1985,7 +2020,7 @@
 
 ;;; note: very bottleneck
 (defun get-fact-list (rete)
-  (delete-duplicates
+  (remove-duplicates
    (sort
     (jscl::hash-table-values (rete-fact-table rete))
     #'(lambda (f1 f2) (< (fact-id f1) (fact-id f2))))))
@@ -2049,7 +2084,7 @@
      (setf (belief-factor fact) belief-factor)))
 
 (defmethod adjust-belief (rete fact (belief-factor t))
-  (declare (ignore rete))
+  ;;(declare (ignore rete))
   (when (in-rule-firing-p)
     (let ((rule-belief (belief-factor (active-rule)))
           (facts (token-make-fact-list *active-tokens*)))

@@ -10,6 +10,7 @@
 
 ;;; File: node2-test.lisp
 
+;;; GENERIC
 (defgeneric increment-use-count (shared-node))
 ;;;(defgeneric decrement-use-count (shared-node))
 (defgeneric node-use-count (shared-node))
@@ -36,6 +37,20 @@
 ;;;(defgeneric find-existing-successor (shared-node  node1))
 ;;;(defgeneric add-node-set (parent node &optional count-p ))
 
+;;; CLASSES
+
+(defclass shared-node ()
+  ((successors :initform (make-hash-table :test #'equal)
+               :reader shared-node-successors)
+   (refcnt :initform 0
+           :accessor shared-node-refcnt)))
+(defclass terminal-node ()
+  ((rule :initarg :rule
+         :initform nil
+         :reader terminal-node-rule)))
+(defclass node1 (shared-node)
+  ((test :initarg :test
+         :reader node1-test)))
 (defclass join-node ()
   ((successor :initform nil
               :accessor join-node-successor)
@@ -47,8 +62,20 @@
                 :reader join-node-left-memory)
    (right-memory :initform (make-hash-table :test #'equal)
                  :reader join-node-right-memory)))
-
+(defclass node2 (join-node) ())
+(defclass node2-not (join-node) ())
 (defclass node2-test (join-node) ())
+(defclass node2-exists (join-node) ())
+(defclass rete-network ()
+  ((root-nodes :initform (make-hash-table)
+               :initarg :root-nodes
+               :reader rete-roots)
+   (node-test-cache :initform (make-hash-table :test #'equal)
+                    :initarg :node-test-cache
+                    :reader node-test-cache)))
+
+
+;;;;;; METHODS
 
 (defmethod accept-tokens-from-left ((self node2-test) (left-tokens add-token))
   (add-tokens-to-left-memory self left-tokens)
@@ -65,6 +92,8 @@
   (make-instance 'node2-test))
 
 ;;; File: shared-node.lisp
+
+#+nil
 (defclass shared-node ()
   ((successors :initform (make-hash-table :test #'equal)
                :reader shared-node-successors)
@@ -84,20 +113,37 @@
 (defmethod node-referenced-p ((self shared-node))
   (plusp (node-use-count self)))
 
+#+nil
 (defmethod pass-token-to-successors ((self shared-node) token)
-  ;;(declare (optimize (speed 3) (debug 1) (safety 0)))
   (loop for successor being the hash-values of (shared-node-successors self)
-      do (funcall (successor-connector successor)
-                  (successor-node successor)
-                  token)))
+        do (funcall (successor-connector successor)
+                    (successor-node successor)
+                    token)))
 
+(defmethod pass-token-to-successors ((self shared-node) token)
+  (loop for successor in (jscl::hash-table-values (shared-node-successors self))
+        do (funcall (successor-connector successor)
+                    (successor-node successor)
+                    token)))
+
+#+nil
 (defun shared-node-successor-nodes (shared-node)
   (loop for successor being the hash-values of (shared-node-successors shared-node)
-      collect (successor-node successor)))
+        collect (successor-node successor)))
 
+(defun shared-node-successor-nodes (shared-node)
+  (loop for successor in (jscl::hash-table-values (shared-node-successors shared-node))
+        collect (successor-node successor)))
+
+#+nil
 (defun shared-node-all-successors (shared-node)
   (loop for successor being the hash-values of (shared-node-successors shared-node)
-      collect successor))
+        collect successor))
+
+(defun shared-node-all-successors (shared-node)
+  (loop for successor in (jscl::hash-table-values (shared-node-successors shared-node))
+        collect successor))
+
 
 ;;; File: successor.lisp
 (defun make-successor (node connector)
@@ -127,6 +173,8 @@
 
 
 ;;; File: terminal-node.lisp
+
+#+nil
 (defclass terminal-node ()
   ((rule :initarg :rule
          :initform nil
@@ -160,6 +208,8 @@
   (make-instance 'terminal-node :rule rule))
 
 ;;; File: node1.lisp
+
+#+nil
 (defclass node1 (shared-node)
   ((test :initarg :test
          :reader node1-test)))
@@ -291,27 +341,51 @@
             (length (join-node-tests self)))))
 
 ;;; File: node2.lisp
+
+#+nil
 (defclass node2 (join-node) ())
 
+#+nil
 (defmethod test-against-right-memory ((self node2) left-tokens)
   (loop for right-token being the hash-values of (join-node-right-memory self)
       do (when (test-tokens self left-tokens right-token)
            (pass-tokens-to-successor 
             self (combine-tokens left-tokens right-token)))))
 
+(defmethod test-against-right-memory ((self node2) left-tokens)
+  (loop for right-token in (jscl::hash-table-values (join-node-right-memory self))
+      do (when (test-tokens self left-tokens right-token)
+           (pass-tokens-to-successor 
+            self (combine-tokens left-tokens right-token)))))
+
+#+nil
 (defmethod test-against-left-memory ((self node2) (right-token add-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
       do (when (test-tokens self left-tokens right-token)
            (pass-tokens-to-successor 
             self (combine-tokens left-tokens right-token)))))
-  
+
+(defmethod test-against-left-memory ((self node2) (right-token add-token))
+  (loop for left-tokens in (jscl::hash-table-values (join-node-left-memory self))
+        do (when (test-tokens self left-tokens right-token)
+             (pass-tokens-to-successor 
+              self (combine-tokens left-tokens right-token)))))
+
+#+nil
 (defmethod test-against-left-memory ((self node2) (right-token remove-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
       do (when (test-tokens self left-tokens right-token)
            (pass-tokens-to-successor
             self (combine-tokens
                   (make-remove-token left-tokens) right-token)))))
-  
+
+(defmethod test-against-left-memory ((self node2) (right-token remove-token))
+  (loop for left-tokens in (jscl::hash-table-values (join-node-left-memory self))
+        do (when (test-tokens self left-tokens right-token)
+             (pass-tokens-to-successor
+              self (combine-tokens
+                    (make-remove-token left-tokens) right-token)))))
+
 (defmethod accept-tokens-from-left ((self node2) (left-tokens add-token))
   (add-tokens-to-left-memory self left-tokens)
   (test-against-right-memory self left-tokens))
@@ -332,8 +406,11 @@
   (make-instance 'node2))
 
 ;;; File: node2-not.lisp
+
+#+nil
 (defclass node2-not (join-node) ())
 
+#+nil
 (defmethod test-against-right-memory ((self node2-not) left-tokens)
   (loop for right-token being the hash-values of (join-node-right-memory self)
         do (when (test-tokens self left-tokens right-token)
@@ -342,15 +419,40 @@
     (pass-tokens-to-successor 
      self (combine-tokens left-tokens self))))
 
+(defmethod test-against-right-memory ((self node2-not) left-tokens)
+  (loop for right-token in (jscl::hash-table-values (join-node-right-memory self))
+        do (when (test-tokens self left-tokens right-token)
+             (token-increment-not-counter left-tokens)))
+  (unless (token-negated-p left-tokens)
+    (pass-tokens-to-successor 
+     self (combine-tokens left-tokens self))))
+
+#+nil
 (defmethod test-against-left-memory ((self node2-not) (right-token add-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
         do (when (test-tokens self left-tokens right-token)
              (token-increment-not-counter left-tokens)
              (pass-tokens-to-successor 
               self (combine-tokens (make-remove-token left-tokens) self)))))
+
+(defmethod test-against-left-memory ((self node2-not) (right-token add-token))
+  (loop for left-tokens in (jscl::hash-table-values (join-node-left-memory self))
+        do (when (test-tokens self left-tokens right-token)
+             (token-increment-not-counter left-tokens)
+             (pass-tokens-to-successor 
+              self (combine-tokens (make-remove-token left-tokens) self)))))
   
+#+nil
 (defmethod test-against-left-memory ((self node2-not)(right-token remove-token))
   (loop for left-tokens being the hash-values of (join-node-left-memory self)
+        do (when (and (test-tokens self left-tokens right-token)
+                      (not (token-negated-p
+                            (token-decrement-not-counter left-tokens))))
+             (pass-tokens-to-successor 
+              self (combine-tokens left-tokens self)))))
+
+(defmethod test-against-left-memory ((self node2-not)(right-token remove-token))
+  (loop for left-tokens in (jscl::hash-table-values (join-node-left-memory self))
         do (when (and (test-tokens self left-tokens right-token)
                       (not (token-negated-p
                             (token-decrement-not-counter left-tokens))))
@@ -377,7 +479,7 @@
   (make-instance 'node2-not))
 
 ;;; File: node2-test.lisp
-(defclass node2-test (join-node) ())
+#+nil (defclass node2-test (join-node) ())
 
 (defmethod accept-tokens-from-left ((self node2-test) (left-tokens add-token))
   (add-tokens-to-left-memory self left-tokens)
@@ -394,9 +496,8 @@
   (make-instance 'node2-test))
 
 ;;; File: node2-exists.lisp
-(defclass node2-exists (join-node) ())
+#+nil (defclass node2-exists (join-node) ())
 
-;;;(error "LOOP HASH")
 
 #+nil
 (defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))
@@ -499,6 +600,7 @@
 (defun right-input (address)  (aref *leaf-nodes* address))
 (defun logical-block-marker () *logical-block-marker*)
   
+#+nil
 (defclass rete-network ()
   ((root-nodes :initform (make-hash-table)
                :initarg :root-nodes

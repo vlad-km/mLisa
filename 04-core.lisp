@@ -1385,7 +1385,6 @@
           (make-binding var location slot-name))))
     (values binding existsp)))
 
-;;; bug:
 ;;;  "Given a variable, retrieve the binding object for it."
 (defun find-slot-binding (var &key (errorp t))
   (let ((binding (gethash var *binding-table*)))
@@ -1393,7 +1392,6 @@
       (assert binding nil "Missing slot binding for variable ~A" var))
     binding))
 
-;;; bug:
 (defun set-pattern-binding (var location)
   (assert (not (gethash var *binding-table*)) nil "This is a duplicate pattern binding: ~A" var)
   (setf (gethash var *binding-table*)
@@ -1465,7 +1463,6 @@
 ;;;  "Parses a single raw pattern slot"
 (defun parse-one-slot (form location)
   (with-slot-components (slot-name slot-value constraint) form
-    (print (list 'components slot-name slot-value constraint))
     (cond ((slot-value-is-atom-p slot-value)
            ;; eg. (slot-name "frodo")
            (make-pattern-slot :name slot-name :value slot-value))
@@ -1506,25 +1503,20 @@
   (let ((location 0)
         (patterns (list)))
     (labels ((parse-lhs (pattern-list)
-               (print (list '==> pattern-list))
                (let ((pattern (first pattern-list))
                      (*current-defrule-pattern-location* location))
-                 (print (list 'pattern pattern))
                  (unless (listp pattern)
                    (error 'rule-parsing-error
                           :text "pattern is not a list"
                           :rule-name *current-defrule*
                           :location *current-defrule-pattern-location*))
                  (cond ((null pattern-list)
-                        ;; note: Hmmm
                         (unless *in-logical-pattern-p* (nreverse patterns)))
                        ;; logical CEs are "special"; they don't have their own parser.
                        ((logical-element-p pattern)
-                        (print 'logical)
                         (let ((*in-logical-pattern-p* t))
                           (parse-lhs (rest pattern))))
                        (t
-                        (print 'common)
                         (push (funcall (find-conditional-element-parser (first pattern)) pattern
                                        (1- (incf location)))
                               patterns)
@@ -1535,9 +1527,6 @@
                 :actions actions)))
       (multiple-value-bind (lhs remains)
           (lilu:find-before *rule-separator* body :test #'eq)
-        (print (list 'lhs lhs 'rem remains))
-        (print (list 'left-side (parse-lhs (preprocess-left-side lhs))))
-        (print (list 'right-side (parse-rhs (lilu:find-after *rule-separator* remains :test #'eq))))
         (unless remains
           (error 'rule-parsing-error :text "missing rule separator"))
         (values (parse-lhs (preprocess-left-side lhs))
@@ -1614,17 +1603,6 @@
                :context context
                :belief belief
                :auto-focus auto-focus))
-
-#+nil
-(defun redefine-defrule (name body &key (salience 0) (context nil) (belief nil) (auto-focus nil))
-  (print name)
-  (print body)
-  (define-rule name body :salience salience
-    :context context
-    :belief belief
-    :auto-focus auto-focus))
-
-
 
 
 ;;; File: fact-parser.lisp
@@ -1759,7 +1737,6 @@
                             `(,value))))))
           body))
 
-;;; todo: bug: ASSERT
 (defmacro assert> ((name &body body) &key (belief nil))
   (let ((fact (gensym))
         (fact-object (gensym)))
@@ -1864,7 +1841,6 @@
 
 (defvar *scheduled-dependencies*)
 
-;;; bug: todo:
 (define-symbol-macro scheduled-dependencies *scheduled-dependencies*)
 
 (defun add-logical-dependency (rete fact dependency-set)
@@ -2408,7 +2384,6 @@
                class-object)))
     (import-class-object (find-class class-name))))
 
-;;; todo: bug:
 (defun ensure-meta-data-exists (class-name)
   (flet ((ensure-class-definition ()
            (loop
@@ -2459,7 +2434,6 @@
 (defun token-increment-exists-counter (token)
   (incf (token-exists-counter token)))
 
-;;; bug: assert
 (defun token-decrement-exists-counter (token)
   (assert (plusp (token-exists-counter token)) nil
     "The EXISTS join node logic is busted.")

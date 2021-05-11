@@ -229,31 +229,31 @@
 ;;; File: node2-test.lisp
 
 ;;; GENERIC
-(defgeneric increment-use-count (shared-node))
-;;;(defgeneric decrement-use-count (shared-node))
-(defgeneric node-use-count (shared-node))
-(defgeneric node-referenced-p (shared-node))
-(defgeneric pass-token-to-successors (shared-node token))
-(defgeneric accept-token (terminal-node add-token))
-(defgeneric add-successor (node1 node1 connector))
-(defgeneric remove-successor (node1 successor-node))
 (defgeneric accept-token (node1 token))
-(defgeneric test-tokens (join-node left-tokens right-token))
-(defgeneric pass-tokens-to-successor (join-node left-tokens))
-(defgeneric combine-tokens (token token))
-(defgeneric add-successor (join-node successor-node connector))
-(defgeneric join-node-add-test (join-node test))
-(defgeneric clear-memories (join-node))
-(defgeneric accept-tokens-from-left (node token))
-(defgeneric accept-token-from-left (join-node reset-token))
 (defgeneric accept-token-from-right (join-node reset-token))
-(defgeneric test-against-right-memory (node2 left-tokens))
+(defgeneric accept-tokens-from-left (node token))
+(defgeneric add-successor (node1 node1 connector))
+(defgeneric clear-memories (join-node))
+(defgeneric combine-tokens (token token))
+(defgeneric increment-use-count (shared-node))
+(defgeneric join-node-add-test (join-node test))
+(defgeneric node-referenced-p (shared-node))
+(defgeneric node-use-count (shared-node))
+(defgeneric pass-token-to-successors (shared-node token))
+(defgeneric remove-successor (node1 successor-node))
 (defgeneric test-against-left-memory (node2 add-token))
-;;;(defgeneric remove-node-from-parent (rete-network parent child))
-(defgeneric add-successor (parent new-node connector))
-;;;(defgeneric decrement-use-count (join-node))
-;;;(defgeneric find-existing-successor (shared-node  node1))
+(defgeneric test-against-right-memory (node2 left-tokens))
+(defgeneric test-tokens (join-node left-tokens right-token))
+;;;(defgeneric accept-token (terminal-node add-token))
+;;;(defgeneric accept-token-from-left (join-node reset-token))
 ;;;(defgeneric add-node-set (parent node &optional count-p ))
+;;;(defgeneric add-successor (join-node successor-node connector))
+;;;(defgeneric add-successor (parent new-node connector))
+;;;(defgeneric decrement-use-count (join-node))
+;;;(defgeneric decrement-use-count (shared-node))
+;;;(defgeneric find-existing-successor (shared-node  node1))
+;;;(defgeneric pass-tokens-to-successor (join-node left-tokens))
+;;;(defgeneric remove-node-from-parent (rete-network parent child))
 
 ;;; CLASSES
 
@@ -857,12 +857,18 @@
       (setf (gethash test *root-nodes*) root))
     (record-node root t)))
 
+#+nil
 (defmethod add-successor ((parent t) new-node connector)
+  (print (list 'add-successor-t new-node))
   ;;(declare (ignore connector))
   new-node)
 
+;;; bug: the method never call
+(defmethod add-successor (parent new-node connector)
+  new-node)
+
+;;; method with bug:
 (defmethod add-successor :around ((parent shared-node) new-node connector)
-  ;;(declare (ignore new-node connector))
   (record-node (call-next-method) parent))
 
 (defun make-intra-pattern-node (slot)
@@ -881,16 +887,18 @@
       of (rete-roots rete-network)
       do (accept-token root-node token)))
 
+#+nil
 (defun distribute-token (rete-network token)
   (maphash
    (lambda (ignore root-node)
      (accept-token root-node token))
    (rete-roots rete-network)))
 
+(defun distribute-token (rete-network token)
+  (loop for root-node in (jscl::hash-table-values (rete-roots rete-network))
+        do (accept-token root-node token)))
 
-;;; note: woooooow
-;;;(error "make-rete-network")
-(defmethod make-rete-network (&rest args &key &allow-other-keys)
+(defmethod make-rete-network (&rest args)
   (apply #'make-instance 'rete-network args))
 
 ;;; The following functions serve as "connectors" between any two
@@ -919,23 +927,18 @@
 
 ;;;  "The alpha memory nodes and tests"
 (defun add-intra-pattern-nodes (patterns)
-  ;;(print (list 'patterns (length patterns)))
   (dolist (pattern patterns)
-    ;;(print (list 'pattern pattern 'addr (parsed-pattern-address pattern)))
     (cond ((test-pattern-p pattern)
            (set-leaf-node t (parsed-pattern-address pattern)))
           (t
            (let ((node (make-root-node (parsed-pattern-class pattern)))
                  (address (parsed-pattern-address pattern)))
-             ;;(print (list 'address address 'pattern pattern ))
              (set-leaf-node node address)
-             ;;(print (list 'leaf-node (length *leaf-nodes*)))
              (dolist (slot (parsed-pattern-slots pattern))
                (when (intra-pattern-slot-p slot)
                  (setf node
                        (add-successor node (make-intra-pattern-node slot)
                                       #'pass-token))
-                 ;;(print (list 'intra-address address 'leaf-node (length *leaf-nodes*)))
                  (set-leaf-node node address))))))))
 
 (defun add-join-node-tests (join-node pattern)
@@ -1172,7 +1175,6 @@
                        existing-root 
                        (shared-node-all-successors new-root)))))))
     (let ((*node-set* (list)))
-;;; bug: todo: loop hash-value
       (maphash (lambda (ignore new-root) (merge-root-node new-root)) (rete-roots from-rete))
       (nreverse *node-set*))))
 

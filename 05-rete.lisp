@@ -16,7 +16,7 @@
 (defun find-test (key constructor)
   (let ((test (gethash key *node-test-table*)))
     (when (null test)
-      (setf test
+      (setq test
         (setf (gethash key *node-test-table*)
           (funcall constructor))))
     test))
@@ -38,7 +38,7 @@
              #'(lambda ()
                  (function
                   (lambda (token)
-                    (declare (optimize (speed 3) (debug 1) (safety 0)))
+                    ;;(declare (optimize (speed 3) (debug 1) (safety 0)))
                     (let ((fact (token-top-fact token)))
                       (class-matches-p 
                        (find-instance-of-fact fact) fact class)))))))
@@ -48,23 +48,18 @@
    `(,slot-name ,value ,negated-p)
    #'(lambda ()
        (let ((test
-              (function
-               (lambda (token)
-                 (declare (optimize (speed 3) (debug 1) (safety 0)))
+               (function
+                (lambda (token)
                  (equal value
-                        (get-slot-value
-                         (token-top-fact token)
-                         slot-name))))))
+                        (get-slot-value (token-top-fact token) slot-name))))))
          (if negated-p
              (complement test)
-           test)))))
+             test)))))
 
 (defun make-simple-slot-test (slot)
-  (declare (type pattern-slot slot))
-  (make-simple-slot-test-aux
-   (pattern-slot-name slot)
-   (pattern-slot-value slot)
-   (pattern-slot-negated slot)))
+  (make-simple-slot-test-aux (pattern-slot-name slot)
+                             (pattern-slot-value slot)
+                             (pattern-slot-negated slot)))
 
 #+nul
 (defmacro make-variable-test (slot-name binding)
@@ -78,44 +73,108 @@
 (defun make-inter-pattern-test (slot)
   (let* ((binding (pattern-slot-slot-binding slot))
          (test
-          (function
-           (lambda (tokens)
-             (declare (optimize (speed 3) (debug 1) (safety 0)))
-             (equal (get-slot-value (token-top-fact tokens)
-                                    (pattern-slot-name slot))
-                    (get-slot-value
-                     (token-find-fact tokens (binding-address binding))
-                     (binding-slot-name binding)))))))
+           (function
+            (lambda (tokens)
+             (equal (get-slot-value (token-top-fact tokens) (pattern-slot-name slot))
+                    (get-slot-value (token-find-fact tokens (binding-address binding))
+                                    (binding-slot-name binding)))))))
     (if (negated-slot-p slot) (complement test) test)))
+
+(defun maklet-predicate-test (predicate-forms bindings)
+  (let* ((special-vars (mapcar #'binding-variable bindings))
+         (valuator-form '(valuator (lambda (binding)
+                                     (if (pattern-binding-p binding)
+                                         (token-find-fact tokens (binding-address binding))
+                                         (get-slot-value (token-find-fact  tokens (binding-address binding))
+                                                         (binding-slot-name binding))))))
+         (binding-pairs
+           (loop for symbol-name in special-vars
+                 for binding in bindings
+                 append (list (list symbol-name (list 'funcall 'valuator (list 'quote binding))))))
+         (binding-form (push valuator-form binding-pairs))
+         (let-form (append (list binding-form) predicate-forms)))
+    (push 'let* let-form)
+    ;;(print let-form)
+    let-form))
+
 
 (defun make-predicate-test (forms bindings &optional (negated-p nil))
   (let* ((special-vars
-          (mapcar #'binding-variable bindings))
+           (mapcar #'binding-variable bindings))
          (body
-          (if (consp (first forms)) 
-              forms
-            (list forms)))
-         (predicate
-          (compile nil `(lambda ()
-                          ;;(declare (special ,@special-vars))
-                          ,@body)))
+           (if (consp (first forms)) 
+               forms
+               (list forms)))
          (test
-          (function
-           (lambda (tokens)
+           (eval
+            `(lambda (tokens)
+               ,(maklet-predicate-test `,body `,bindings)))))
+    #+nil
+    (print `(lambda (tokens)
+              ,(maklet-predicate-test `,body `,bindings)))
+    (if negated-p (complement test) test)))
+
+
+#+nil
+(defun make-predicate-test (forms bindings &optional (negated-p nil))
+  (let* ((special-vars
+           (mapcar #'binding-variable bindings))
+         (body
+           (if (consp (first forms)) 
+               forms
+               (list forms)))
+         (predicate
+           (compile nil `(lambda ()
+                           ;;(declaim ,@special-vars)
+                           ,@body)))
+         (test
+           (function
+            (lambda (tokens)
              (progv
                  `(,@special-vars)
                  `(,@(mapcar #'(lambda (binding)
                                  (if (pattern-binding-p binding)
-                                     (token-find-fact 
-                                      tokens (binding-address binding))
-                                   (get-slot-value
-                                    (token-find-fact 
-                                     tokens (binding-address binding))
-                                    (binding-slot-name binding))))
+                                     (token-find-fact tokens (binding-address binding))
+                                     (get-slot-value (token-find-fact  tokens (binding-address binding))
+                                                     (binding-slot-name binding))))
                              bindings))
                (funcall predicate))))))
     (if negated-p (complement test) test)))
 
+
+(defun maklet-pattern-predicate-test (predicate-forms bindings)
+  (let* ((special-vars (mapcar #'binding-variable bindings))
+         (valuator-form '(valuator (lambda (binding)
+                                     (if (pattern-binding-p binding)
+                                         (token-find-fact tokens (binding-address binding))
+                                         (get-slot-value (token-top-fact tokens) (binding-slot-name binding))))))
+         (binding-pairs
+           (loop for symbol-name in special-vars
+                 for binding in bindings
+                 append (list (list symbol-name (list 'funcall 'valuator (list 'quote binding))))))
+         (binding-form (push valuator-form binding-pairs))
+         (let-form (append (list binding-form) predicate-forms)))
+    (push 'let* let-form)
+    ;;(print let-form)
+    let-form))
+
+
+(defun make-intra-pattern-predicate (forms bindings negated-p)
+  (let* ((special-vars
+           (mapcar #'binding-variable bindings))
+         (body
+           (if (consp (first forms)) 
+               forms
+               (list forms)))
+         (test
+           (eval
+            `(lambda (tokens)
+               ,(maklet-pattern-predicate-test `,body `,bindings)))))
+    (if negated-p (complement test) test)))
+
+
+
+#+nil
 (defun make-intra-pattern-predicate (forms bindings negated-p)
   (let* ((special-vars
           (mapcar #'binding-variable bindings))
@@ -126,7 +185,6 @@
          (predicate
           (compile nil `(lambda ()
                           ;;(declare (special ,@special-vars))
-                          ;;(declare (optimize (speed 3) (debug 1) (safety 0)))
                           ,@body)))
          (test
           (function
@@ -134,7 +192,6 @@
              (progv
                  `(,@special-vars)
                  `(,@(mapcar #'(lambda (binding)
-                                 ;;(declare (optimize (speed 3) (debug 1) (safety 0)))
                                  (if (pattern-binding-p binding)
                                      (token-find-fact 
                                       tokens (binding-address binding))
@@ -155,16 +212,17 @@
   (let ((test
          (function
           (lambda (tokens)
-            (declare (optimize (speed 3) (debug 1) (safety 0)))
-            (equal (get-slot-value (token-top-fact tokens)
-                                   (pattern-slot-name slot))
+            (equal (get-slot-value (token-top-fact tokens) (pattern-slot-name slot))
                    (get-slot-value (token-top-fact tokens)
-                                   (binding-slot-name 
-                                    (pattern-slot-slot-binding slot))))))))
+                                   (binding-slot-name (pattern-slot-slot-binding slot))))))))
     (if (negated-slot-p slot) (complement test) test)))
 
 (defun make-behavior (function bindings)
   (make-predicate-test function bindings))
+
+#+nil
+(defun make-behavior (function bindings)
+  (print (list 'make-behavior (make-predicate-test function bindings))))
 
 
 
@@ -861,19 +919,23 @@
 
 ;;;  "The alpha memory nodes and tests"
 (defun add-intra-pattern-nodes (patterns)
+  ;;(print (list 'patterns (length patterns)))
   (dolist (pattern patterns)
+    ;;(print (list 'pattern pattern 'addr (parsed-pattern-address pattern)))
     (cond ((test-pattern-p pattern)
            (set-leaf-node t (parsed-pattern-address pattern)))
           (t
-           (let ((node
-                  (make-root-node (parsed-pattern-class pattern)))
+           (let ((node (make-root-node (parsed-pattern-class pattern)))
                  (address (parsed-pattern-address pattern)))
+             ;;(print (list 'address address 'pattern pattern ))
              (set-leaf-node node address)
+             ;;(print (list 'leaf-node (length *leaf-nodes*)))
              (dolist (slot (parsed-pattern-slots pattern))
                (when (intra-pattern-slot-p slot)
                  (setf node
-                   (add-successor node (make-intra-pattern-node slot)
-                                  #'pass-token))
+                       (add-successor node (make-intra-pattern-node slot)
+                                      #'pass-token))
+                 ;;(print (list 'intra-address address 'leaf-node (length *leaf-nodes*)))
                  (set-leaf-node node address))))))))
 
 (defun add-join-node-tests (join-node pattern)

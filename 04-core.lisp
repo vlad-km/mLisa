@@ -1789,7 +1789,7 @@
   (let ((rules (get-rule-list (inference-engine) context-name)))
     (dolist (rule rules)
       (format t "~S~%" rule))
-    (format t "For a total of ~D rule~:P.~%" (length rules))
+    (format t "For a total of ~D rule.~%" (length rules))
     (values)))
 
 (defun agenda (&optional (context-name nil))
@@ -1887,7 +1887,7 @@
 (defclass rete ()
   ((fact-table :initform (make-hash-table :test #'equal)
                :accessor rete-fact-table)
-   (fact-id-table :initform (make-hash-table)
+   (fact-id-table :initform (make-hash-table :test #'equal)
                   :accessor fact-id-table)
    (instance-table :initform (make-hash-table)
                    :reader rete-instance-table)
@@ -1916,6 +1916,7 @@
   (reset-focus-stack self)
   self)
 
+
 ;;; FACT-META-OBJECT represents data about facts. Every Lisa fact is backed by
 ;;; a CLOS instance that was either defined by the application or internally
 ;;; by Lisa (via DEFTEMPLATE).
@@ -1941,7 +1942,7 @@
 (defun add-rule-to-network (rete rule patterns)
   (flet ((load-facts (network)
            (maphash #'(lambda (key fact)
-                        (declare (ignore key))
+                        ;;(declare (ignore key))
                         (add-fact-to-network network fact))
                     (rete-fact-table rete))))
     (when (find-rule rete (rule-name rule))
@@ -1980,11 +1981,25 @@
     (setf (gethash (hash-key fact) fact-table) fact)
     (setf (gethash (fact-id fact) id-table) fact)))
 
+;;; make (1) from 1 for hash-table
+(defgeneric hash-id (instance))
+(defmethod hash-id ((instance fact)) (list (fact-id instance)))
+
+#+nil
 (defun remember-fact (rete fact)
   (with-accessors ((fact-table rete-fact-table)
                    (id-table fact-id-table)) rete
     (setf (gethash (hash-key fact) fact-table) fact)
     (setf (gethash (string (fact-id fact)) id-table) fact)))
+
+(defun remember-fact (rete fact)
+  (with-accessors ((fact-table rete-fact-table)
+                   (id-table fact-id-table)) rete
+    (setf (gethash (hash-key fact) fact-table) fact)
+    (setf (gethash (hash-id fact) id-table) fact)))
+
+
+
 
 #+nil
 (defun forget-fact (rete fact)
@@ -1993,11 +2008,19 @@
     (remhash (hash-key fact) fact-table)
     (remhash (fact-id fact) id-table)))
 
+#+nil
 (defun forget-fact (rete fact)
   (with-accessors ((fact-table rete-fact-table)
                    (id-table fact-id-table)) rete
     (remhash (hash-key fact) fact-table)
     (remhash (string (fact-id fact)) id-table)))
+
+(defun forget-fact (rete fact)
+  (with-accessors ((fact-table rete-fact-table)
+                   (id-table fact-id-table)) rete
+    (remhash (hash-key fact) fact-table)
+    (remhash (hash-id fact) id-table)))
+
 
 #+nil
 (defun find-fact-by-id (rete fact-id)

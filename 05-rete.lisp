@@ -155,7 +155,6 @@
          (binding-form (push valuator-form binding-pairs))
          (let-form (append (list binding-form) predicate-forms)))
     (push 'let* let-form)
-    ;;(print let-form)
     let-form))
 
 
@@ -220,11 +219,6 @@
 (defun make-behavior (function bindings)
   (make-predicate-test function bindings))
 
-#+nil
-(defun make-behavior (function bindings)
-  (print (list 'make-behavior (make-predicate-test function bindings))))
-
-
 
 ;;; File: node2-test.lisp
 
@@ -252,7 +246,7 @@
 ;;;(defgeneric decrement-use-count (join-node))
 ;;;(defgeneric decrement-use-count (shared-node))
 ;;;(defgeneric find-existing-successor (shared-node  node1))
-;;;(defgeneric pass-tokens-to-successor (join-node left-tokens))
+(defgeneric pass-tokens-to-successor (join-node left-tokens))
 ;;;(defgeneric remove-node-from-parent (rete-network parent child))
 
 ;;; CLASSES

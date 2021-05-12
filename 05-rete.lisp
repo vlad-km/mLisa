@@ -247,7 +247,7 @@
 ;;;(defgeneric decrement-use-count (shared-node))
 ;;;(defgeneric find-existing-successor (shared-node  node1))
 (defgeneric pass-tokens-to-successor (join-node left-tokens))
-;;;(defgeneric remove-node-from-parent (rete-network parent child))
+(defgeneric remove-node-from-parent (rete-network parent child))
 
 ;;; CLASSES
 
@@ -286,6 +286,48 @@
                     :initarg :node-test-cache
                     :reader node-test-cache)))
 
+(defgeneric mak-hash-successor-node (node))
+
+(defmethod mak-hash-successor-node (node)
+  (write-to-string node))
+
+(defmethod mak-hash-successor-node ((node shared-node))
+  (list 'shared-node
+        'successors (hash-table-count (shared-node-successors node))
+        'refcnt (shared-node-refcnt node))  )
+
+(defmethod mak-hash-successor-node ((node node1))
+  (list 'shared-node 'node1
+        'successors  (hash-table-count (shared-node-successors node))
+        'refcnt (shared-node-refcnt node))  )
+
+(defmethod mak-hash-successor-node ((node node2))
+  (list 'join-node 'node2
+        'successors (join-node-successor node)
+        'logical (join-node-logical-block node)
+        'left (hash-table-count (join-node-left-memory node))
+        'left (hash-table-count (join-node-right-memory node)))  )
+
+(defmethod mak-hash-successor-node ((node node2-not))
+  (list 'shared-node 'node2-not
+        'successors (join-node-successor node)
+        'logical (join-node-logical-block node)
+        'left (hash-table-count (join-node-left-memory node))
+        'left (hash-table-count (join-node-right-memory node))))
+
+(defmethod mak-hash-successor-node ((node node2-test))
+  (list 'shared-node 'node2-test
+        'successors (join-node-successor node)
+        'logical (join-node-logical-block node)
+        'left (hash-table-count (join-node-left-memory node))
+        'left (hash-table-count (join-node-right-memory node))))
+
+(defmethod mak-hash-successor-node ((node node2-exists))
+  (list 'shared-node 'node2-exists
+        'successors (join-node-successor node)
+        'logical (join-node-logical-block node)
+        'left (hash-table-count (join-node-left-memory node))
+        'left (hash-table-count (join-node-right-memory node))))
 
 ;;;;;; METHODS
 
@@ -427,6 +469,7 @@
          :reader node1-test)))
 
 (defmethod add-successor ((self node1) (new-node node1) connector)
+  (print 'add-successor-with-slots)
   (with-slots ((successor-table successors)) self
     (let ((successor (gethash (node1-test new-node) successor-table)))
       (when (null successor)
@@ -435,10 +478,24 @@
             (make-successor new-node connector))))
       (successor-node successor))))
 
+(defun mak-hash-successor (node connector)
+  (let ((h (list (mak-hash-successor-node node) (write-to-string connector))))
+    h))
+   
+#+nil
 (defmethod add-successor ((self node1) (new-node t) connector)
+  (print 'add-successor-setf-key)
   (setf (gethash `(,new-node ,connector) (shared-node-successors self))
     (make-successor new-node connector))
   new-node)
+
+(defmethod add-successor ((self node1) (new-node t) connector)
+  (print 'add-successor-setf-key)
+  (setf (gethash (mak-hash-successor new-node connector) (shared-node-successors self))
+        (make-successor new-node connector))
+  new-node)
+
+
 
 (defmethod remove-successor ((self node1) successor-node)
   (let ((successors (shared-node-successors self)))
@@ -527,8 +584,8 @@
   (token-push-fact (replicate-token left-tokens) right-token))
 
 (defmethod add-successor ((self join-node) successor-node connector)
-  (setf (join-node-successor self)
-    (make-successor successor-node connector)))
+  (print 'add-successor-setf-join-node)
+  (setf (join-node-successor self) (make-successor successor-node connector)))
 
 (defmethod join-node-add-test ((self join-node) test)
   (push test (join-node-tests self)))
@@ -822,17 +879,19 @@
                     :reader node-test-cache)))
 
 (defun record-node (node parent)
+  (print (list 'recoder-node node parent))
   (when (typep parent 'shared-node) (increment-use-count parent))
   (push (make-node-pair node parent) *rule-specific-nodes*)
   node)
 
-#+nil
+
 (defmethod remove-node-from-parent ((self rete-network)(parent t) child)
   (remhash (node1-test child) (rete-roots self)))
-#+nil
+
 (defmethod remove-node-from-parent ((self rete-network)(parent shared-node) child)
   (remove-successor parent child))
 
+#+nil
 (defun remove-node-from-parent (self parent child)
   (typecase self
     (rete-network
@@ -859,10 +918,12 @@
 
 ;;; bug: the method never call
 (defmethod add-successor (parent new-node connector)
+  (print 'add-successor-primary)
   new-node)
 
 ;;; method with bug:
 (defmethod add-successor :around ((parent shared-node) new-node connector)
+  (print 'add-succesor-around-shared)
   (record-node (call-next-method) parent))
 
 (defun make-intra-pattern-node (slot)

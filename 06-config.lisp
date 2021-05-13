@@ -53,7 +53,7 @@
                  (list 'identity (read strm t nil t)))))
   (pushnew :lisa *features*))
 
-(eval-when (:load-toplevel :execute)
+(eval-when (:compile-top-level :load-toplevel :execute)
   (make-default-inference-engine)
   (setf *active-context* (initial-context (inference-engine)))
   (pushnew :lisa *features*))

@@ -437,6 +437,7 @@
 (defmethod accept-token ((self terminal-node) (tokens add-token))
   (let* ((rule (terminal-node-rule self))
          (activation (make-activation rule tokens)))
+    ;;;(print (list 'accept-token-activation activation))
     (add-activation (rule-engine rule) activation)
     (bind-rule-activation rule activation tokens)
     t))
@@ -469,7 +470,7 @@
          :reader node1-test)))
 
 (defmethod add-successor ((self node1) (new-node node1) connector)
-  (print 'add-successor-with-slots)
+  ;;;(print 'add-successor-with-slots)
   (with-slots ((successor-table successors)) self
     (let ((successor (gethash (node1-test new-node) successor-table)))
       (when (null successor)
@@ -490,7 +491,7 @@
   new-node)
 
 (defmethod add-successor ((self node1) (new-node t) connector)
-  (print 'add-successor-setf-key)
+  ;;;(print 'add-successor-setf-key)
   (setf (gethash (mak-hash-successor new-node connector) (shared-node-successors self))
         (make-successor new-node connector))
   new-node)
@@ -584,7 +585,7 @@
   (token-push-fact (replicate-token left-tokens) right-token))
 
 (defmethod add-successor ((self join-node) successor-node connector)
-  (print 'add-successor-setf-join-node)
+  ;;;(print 'add-successor-setf-join-node)
   (setf (join-node-successor self) (make-successor successor-node connector)))
 
 (defmethod join-node-add-test ((self join-node) test)
@@ -879,7 +880,7 @@
                     :reader node-test-cache)))
 
 (defun record-node (node parent)
-  (print (list 'recoder-node node parent))
+  ;;;(print (list 'recoder-node node parent))
   (when (typep parent 'shared-node) (increment-use-count parent))
   (push (make-node-pair node parent) *rule-specific-nodes*)
   node)
@@ -918,12 +919,12 @@
 
 ;;; bug: the method never call
 (defmethod add-successor (parent new-node connector)
-  (print 'add-successor-primary)
+  ;;;(print 'add-successor-primary)
   new-node)
 
 ;;; method with bug:
 (defmethod add-successor :around ((parent shared-node) new-node connector)
-  (print 'add-succesor-around-shared)
+  ;;;(print 'add-succesor-around-shared)
   (record-node (call-next-method) parent))
 
 (defun make-intra-pattern-node (slot)
@@ -1108,6 +1109,7 @@
       do (accept-token root-node (funcall token-ctor))))
 
 (defun add-token-to-network (rete-network token-ctor)
+  ;;(print (list 'funcall (funcall token-ctor)))
   (maphash (lambda (ignore root-node)
              (accept-token root-node (funcall token-ctor)))
            (rete-roots rete-network)))

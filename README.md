@@ -15,7 +15,7 @@
 ```
 Will be bundle js-code "lisa.js".
 
-Compilation "lisa.js" look at `./bundle`.
+Compilation "lisa.js" look at  https://github.com/vlad-km/mLisa/releases v0.1-alpha `First iteration`
 
 ### Use with browser
 

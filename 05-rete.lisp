@@ -94,9 +94,7 @@
          (binding-form (push valuator-form binding-pairs))
          (let-form (append (list binding-form) predicate-forms)))
     (push 'let* let-form)
-    ;;(print let-form)
     let-form))
-
 
 (defun make-predicate-test (forms bindings &optional (negated-p nil))
   (let* ((special-vars
@@ -109,12 +107,10 @@
            (eval
             `(lambda (tokens)
                ,(maklet-predicate-test `,body `,bindings)))))
-    #+nil
-    (print `(lambda (tokens)
-              ,(maklet-predicate-test `,body `,bindings)))
     (if negated-p (complement test) test)))
 
 
+;;; original make-predicate-test with PROGV
 #+nil
 (defun make-predicate-test (forms bindings &optional (negated-p nil))
   (let* ((special-vars
@@ -172,7 +168,7 @@
     (if negated-p (complement test) test)))
 
 
-
+;;; original make-intra-pattern-predicate with PROGV
 #+nil
 (defun make-intra-pattern-predicate (forms bindings negated-p)
   (let* ((special-vars
@@ -437,7 +433,6 @@
 (defmethod accept-token ((self terminal-node) (tokens add-token))
   (let* ((rule (terminal-node-rule self))
          (activation (make-activation rule tokens)))
-    ;;;(print (list 'accept-token-activation activation))
     (add-activation (rule-engine rule) activation)
     (bind-rule-activation rule activation tokens)
     t))
@@ -470,7 +465,6 @@
          :reader node1-test)))
 
 (defmethod add-successor ((self node1) (new-node node1) connector)
-  ;;;(print 'add-successor-with-slots)
   (with-slots ((successor-table successors)) self
     (let ((successor (gethash (node1-test new-node) successor-table)))
       (when (null successor)
@@ -479,10 +473,7 @@
             (make-successor new-node connector))))
       (successor-node successor))))
 
-(defun mak-hash-successor (node connector)
-  (let ((h (list (mak-hash-successor-node node) (write-to-string connector))))
-    h))
-   
+;;; original add-successor 
 #+nil
 (defmethod add-successor ((self node1) (new-node t) connector)
   (print 'add-successor-setf-key)
@@ -490,8 +481,11 @@
     (make-successor new-node connector))
   new-node)
 
+(defun mak-hash-successor (node connector)
+  (let ((h (list (mak-hash-successor-node node) (write-to-string connector))))
+    h))
+
 (defmethod add-successor ((self node1) (new-node t) connector)
-  ;;;(print 'add-successor-setf-key)
   (setf (gethash (mak-hash-successor new-node connector) (shared-node-successors self))
         (make-successor new-node connector))
   new-node)
@@ -524,19 +518,6 @@
 
 
 ;;; File: join-node.lisp
-#+nil
-(defclass join-node ()
-  ((successor :initform nil
-              :accessor join-node-successor)
-   (logical-block :initform nil
-                  :reader join-node-logical-block)
-   (tests :initform (list)
-          :accessor join-node-tests)
-   (left-memory :initform (make-hash-table :test #'equal)
-                :reader join-node-left-memory)
-   (right-memory :initform (make-hash-table :test #'equal)
-                 :reader join-node-right-memory)))
-
 (defun mark-as-logical-block (join-node marker)
   (setf (slot-value join-node 'logical-block) marker))
 
@@ -585,7 +566,6 @@
   (token-push-fact (replicate-token left-tokens) right-token))
 
 (defmethod add-successor ((self join-node) successor-node connector)
-  ;;;(print 'add-successor-setf-join-node)
   (setf (join-node-successor self) (make-successor successor-node connector)))
 
 (defmethod join-node-add-test ((self join-node) test)
@@ -612,8 +592,6 @@
 
 ;;; File: node2.lisp
 
-#+nil
-(defclass node2 (join-node) ())
 
 #+nil
 (defmethod test-against-right-memory ((self node2) left-tokens)
@@ -676,9 +654,6 @@
   (make-instance 'node2))
 
 ;;; File: node2-not.lisp
-
-#+nil
-(defclass node2-not (join-node) ())
 
 #+nil
 (defmethod test-against-right-memory ((self node2-not) left-tokens)
@@ -749,7 +724,6 @@
   (make-instance 'node2-not))
 
 ;;; File: node2-test.lisp
-#+nil (defclass node2-test (join-node) ())
 
 (defmethod accept-tokens-from-left ((self node2-test) (left-tokens add-token))
   (add-tokens-to-left-memory self left-tokens)
@@ -766,8 +740,6 @@
   (make-instance 'node2-test))
 
 ;;; File: node2-exists.lisp
-#+nil (defclass node2-exists (join-node) ())
-
 
 #+nil
 (defmethod test-against-right-memory ((self node2-exists) (left-tokens add-token))
@@ -880,7 +852,6 @@
                     :reader node-test-cache)))
 
 (defun record-node (node parent)
-  ;;;(print (list 'recoder-node node parent))
   (when (typep parent 'shared-node) (increment-use-count parent))
   (push (make-node-pair node parent) *rule-specific-nodes*)
   node)
@@ -891,17 +862,6 @@
 
 (defmethod remove-node-from-parent ((self rete-network)(parent shared-node) child)
   (remove-successor parent child))
-
-#+nil
-(defun remove-node-from-parent (self parent child)
-  (typecase self
-    (rete-network
-     (cond ((eql parent t)
-            (remhash (node1-test child) (rete-roots self)))
-           ((typep parent 'shared-node)
-            (remove-successor parent child))
-           (t (error "remove-node-from-parent: WTF node ~a?" parent))))
-    (t (error "remove-node-from-parent: WTF rete-network ~a" self))))
 
 (defun make-root-node (class)
   (let* ((test (make-class-test class))
@@ -919,12 +879,10 @@
 
 ;;; bug: the method never call
 (defmethod add-successor (parent new-node connector)
-  ;;;(print 'add-successor-primary)
   new-node)
 
 ;;; method with bug:
 (defmethod add-successor :around ((parent shared-node) new-node connector)
-  ;;;(print 'add-succesor-around-shared)
   (record-node (call-next-method) parent))
 
 (defun make-intra-pattern-node (slot)
@@ -942,13 +900,6 @@
   (loop for root-node being the hash-values 
       of (rete-roots rete-network)
       do (accept-token root-node token)))
-
-#+nil
-(defun distribute-token (rete-network token)
-  (maphash
-   (lambda (ignore root-node)
-     (accept-token root-node token))
-   (rete-roots rete-network)))
 
 (defun distribute-token (rete-network token)
   (loop for root-node in (jscl::hash-table-values (rete-roots rete-network))
@@ -1102,14 +1053,13 @@
      (make-dependency-set left-tokens (join-node-logical-block self)))))
 
 ;;; File: network-ops.lisp
-;;;(error "loop hash-values")
+
 #+nil
 (defun add-token-to-network (rete-network token-ctor)
   (loop for root-node being the hash-values of (rete-roots rete-network)
       do (accept-token root-node (funcall token-ctor))))
 
 (defun add-token-to-network (rete-network token-ctor)
-  ;;(print (list 'funcall (funcall token-ctor)))
   (maphash (lambda (ignore root-node)
              (accept-token root-node (funcall token-ctor)))
            (rete-roots rete-network)))
@@ -1126,7 +1076,6 @@
   (add-token-to-network
    rete-network #'(lambda () (make-reset-token t))))
 
-;;; note: wooow
 #+nil (defmethod decrement-use-count ((node join-node)) 0)
 #+nil (defmethod decrement-use-count ((node terminal-node)) 0)
 

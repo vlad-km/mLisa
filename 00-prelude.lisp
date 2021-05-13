@@ -18,7 +18,7 @@
   (unless (find-package :heap)
     (make-package :heap :use (list 'cl))))
 
-#+nil
+
 (defun assert-error (form datum &rest args)
   (error
    (if datum
@@ -27,7 +27,7 @@
 				             :format-control "Assert failed: ~s."
 				             :format-arguments (list form)))))
 
-#+nil
+
 (defmacro assert (test &optional ignore datum &rest args)
   (let ((value (gensym "ASSERT-VALUE"))
         (name (gensym "ASSERT-BLOCK")))

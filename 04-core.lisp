@@ -68,6 +68,7 @@
 (defgeneric make-add-token (fact))
 (defgeneric make-remove-token (token))
 (defgeneric make-reset-token (fact))
+;;; bug:
 (defgeneric make-rete-network (&rest args &key &allow-other-keys))
 ;;;(defgeneric add-activation (self activation))
 

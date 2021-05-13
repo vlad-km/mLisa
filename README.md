@@ -45,7 +45,7 @@ File `jscl.html`:
 
 ```
 
-- general view ![general view](https://github.com/vlad-km/mlisa/blob/master/jscl.png)
+- General view ![general view](https://github.com/vlad-km/mlisa/blob/master/jscl.png)
 
 
 ### What's next

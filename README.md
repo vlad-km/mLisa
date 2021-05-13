@@ -45,7 +45,7 @@ File `jscl.html`:
 
 ```
 
-Screenshot of LISA session ![general view](https://github.com/vlad-km/mlisa/blob/master/jscl.png)
+- general view ![general view](https://github.com/vlad-km/mlisa/blob/master/jscl.png)
 
 
 ### What's next

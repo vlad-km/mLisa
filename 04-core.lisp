@@ -988,7 +988,6 @@
 
 ;;;  "Represents production rules after they've been analysed by the language
 ;;;  parser."
-
 (defclass rule ()
   ((short-name :initarg :short-name
                :initform nil
@@ -1033,7 +1032,6 @@
            :initform nil
            :reader rule-engine)))
 
-;;; todo:
 (defmethod fire-rule ((self rule) tokens)
   (let ((*active-rule* self)
         (*active-engine* (rule-engine self))
@@ -1044,12 +1042,11 @@
 (defun rule-default-name (rule)
   (if (initial-context-p (rule-context rule))
       (rule-short-name rule)
-    (rule-name rule)))
+      (rule-name rule)))
 
 (defun bind-rule-activation (rule activation tokens)
-  ;;;(print (list 'bind-rule-activation-tokens tokens))
   (setf (gethash (hash-key tokens) (rule-activations rule))
-    activation))
+        activation))
 
 (defun unbind-rule-activation (rule tokens)
   (remhash (hash-key tokens) (rule-activations rule)))
@@ -1067,10 +1064,9 @@
   (with-accessors ((behavior rule-behavior)) rule
     (unless behavior
       (setf (rule-behavior rule)
-        (make-behavior (rule-actions-actions actions)
-                       (rule-actions-bindings actions))))))
+            (make-behavior (rule-actions-actions actions)
+                           (rule-actions-bindings actions))))))
 
-;;; todo:
 (defmethod conflict-set ((self rule))
   (conflict-set (rule-context self)))
 
@@ -1093,7 +1089,6 @@
 (defun auto-focus-p (rule)
   (rule-auto-focus rule))
 
-;;;(error "ASSERT")
 (defun find-any-logical-boundaries (patterns)
   (flet ((ensure-logical-blocks-are-valid (addresses)
            (assert (and (= (first (last addresses)) 1)
@@ -1106,7 +1101,6 @@
            ;; arguments need to be inverted because address values are PUSHed
            ;; onto the list ADDRESSES, and therefore are in reverse order
            (reduce #'(lambda (second first)
-                       ;; bug: ASSERT
                        (assert (= second (1+ first)) nil
                          "All logical patterns within a rule must be contiguous.")
                        second)
@@ -1120,7 +1114,6 @@
       (first addresses))))
 
 (defmethod initialize-instance :after ((self rule) &rest initargs)
-  ;;(declare (ignore initargs))
   (with-slots ((qual-name qualified-name)) self
     (setf qual-name
       (intern (format nil "~A.~A" 
@@ -1135,7 +1128,6 @@
                        (belief nil)
                        (compiled-behavior nil))
   (flet ((make-rule-binding-set ()
-           ;;(delete-duplicates
            (remove-duplicates
             (loop for pattern in patterns
                 append (parsed-pattern-binding-set pattern)))))
@@ -1193,8 +1185,6 @@
 
 ;;;  "Represents the canonical form of a slot within a pattern analysed by the
 ;;;  DEFRULE parser."
-
-;;; todo: as defclass
 (defstruct pattern-slot
   (name nil :type symbol)
   (value nil)
@@ -1252,11 +1242,9 @@
 (defun negated-pattern-p (pattern)
   (eq (parsed-pattern-type pattern) :negated))
 
-;;;(error "ASSERT")
-;;; bug:
 (defun parsed-pattern-test-forms (pattern)
   (assert (test-pattern-p pattern) nil
-    "This pattern is not a test pattern: ~S" pattern)
+          "This pattern is not a test pattern: ~S" pattern)
   (parsed-pattern-slots pattern))
 
 (defun simple-slot-p (pattern-slot)
@@ -1299,7 +1287,8 @@
 (defvar *conditional-elements-table*
   '((exists . parse-exists-pattern)
     (not . parse-not-pattern)
-    (test . parse-test-pattern)))
+    (test . parse-test-pattern)
+    (or . parse-or-pattern)))
 
 (defun extract-rule-headers (body)
   (if (stringp (first body))
@@ -1353,7 +1342,7 @@
       collect binding))
 
 (defun make-binding-set ()
-  (jscl::hash-table-values *binding-table*))
+  (reverse (jscl::hash-table-values *binding-table*)))
 
 
 ;;;  "Given a variable, either retrieve the binding object for it or create a new one."
@@ -1362,8 +1351,8 @@
       (gethash var *binding-table*)
     (unless existsp
       (setf binding
-        (setf (gethash var *binding-table*)
-          (make-binding var location slot-name))))
+            (setf (gethash var *binding-table*)
+                  (make-binding var location slot-name))))
     (values binding existsp)))
 
 ;;;  "Given a variable, retrieve the binding object for it."
@@ -1566,6 +1555,12 @@
   (let ((pattern (parse-generic-pattern (second pattern) location)))
     (setf (parsed-pattern-type pattern) :negated)
     pattern))
+
+(defun parse-or-pattern (pattern location)
+  (let ((sub-patterns (mapcar #'(lambda (pat)
+				   (parse-generic-pattern pat location))
+			       (cdr pattern))))
+    (make-parsed-pattern :sub-patterns sub-patterns :type :or)))
 
 ;;; High-level rule definition interfaces...
 

@@ -413,7 +413,6 @@
 ;;;  list. FACT is a FACT instance; SLOTS is a list of symbol/value pairs."
   (let ((instance
           (make-instance (find-class (get-class-name meta-data) nil))))
-    ;; bug:
     (assert (not (null instance)) nil
             "No class was found corresponding to fact name ~S." (fact-name fact))
     (setf (slot-value fact 'clos-instance) instance)
@@ -529,7 +528,7 @@
      (unwatch-event :rules)))
   (unless (eq event :all)
     (setf *watches*
-          ;; bug: ??
+          ;; bug: function delete undefined !!!
           (delete event *watches*)))
   event)
 

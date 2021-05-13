@@ -777,13 +777,6 @@
 (defclass strategy ()
   ())
 
-;;;(defgeneric add-activation (strategy activation))
-;;;(defgeneric find-activation (strategy rule token))
-;;;(defgeneric find-all-activations (strategy rule))
-;;;(defgeneric next-activation (strategy))
-;;;(defgeneric remove-activations (strategy))
-;;;(defgeneric list-activations (strategy))
-
 (defclass priority-queue-mixin ()
   ((heap :initarg :heap
          :reader heap)))
@@ -860,16 +853,17 @@
 
 (defun make-depth-first-strategy ()
   (make-instance 'depth-first-strategy
-                 :heap (heap:create-heap #'(lambda (a b)
-                                             (cond ((> (activation-priority a)
-                                                       (activation-priority b))
-                                                    a)
-                                                   ((and (= (activation-priority a)
-                                                            (activation-priority b))
-                                                         (> (activation-timestamp a)
-                                                            (activation-timestamp b)))
-                                                    a)
-                                                   (t nil))))))
+                 :heap (heap:create-heap
+                        #'(lambda (a b)
+                            (cond ((> (activation-priority a)
+                                      (activation-priority b))
+                                   a)
+                                  ((and (= (activation-priority a)
+                                           (activation-priority b))
+                                        (> (activation-timestamp a)
+                                           (activation-timestamp b)))
+                                   a)
+                                  (t nil))))))
 
 ;;; "A breadth-first conflict resolution strategy."
 (defclass breadth-first-strategy (builtin-strategy)
@@ -877,16 +871,17 @@
 
 (defun make-breadth-first-strategy ()
   (make-instance 'breadth-first-strategy
-                 :heap (heap:create-heap #'(lambda (a b)
-                                             (cond ((> (activation-priority a)
-                                                       (activation-priority b))
-                                                    a)
-                                                   ((and (= (activation-priority a)
-                                                            (activation-priority b))
-                                                         (< (activation-timestamp a)
-                                                            (activation-timestamp b)))
-                                                    a)
-                                                   (t nil))))))
+                 :heap (heap:create-heap
+                        #'(lambda (a b)
+                            (cond ((> (activation-priority a)
+                                      (activation-priority b))
+                                   a)
+                                  ((and (= (activation-priority a)
+                                           (activation-priority b))
+                                        (< (activation-timestamp a)
+                                           (activation-timestamp b)))
+                                   a)
+                                  (t nil))))))
 
 ;;; File: context.lisp
 

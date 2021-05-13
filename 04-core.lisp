@@ -18,8 +18,6 @@
           (*ignore-this-instance* ,var))
      ,@body))
 
-;;;(defgeneric make-rete-network (&rest args &key &allow-other-keys))
-
 (defun active-context ()  *active-context*)
 (defun active-tokens ()  *active-tokens*)
 (defun active-rule ()   *active-rule*)
@@ -27,6 +25,7 @@
 (defun in-rule-firing-p () (not (null (active-rule))))
 
 
+;;;(defgeneric make-rete-network (&rest args &key &allow-other-keys))
 (defgeneric (setf slot-value-of-instance) (new-value object slot-name))
 (defgeneric activation-priority (self))
 (defgeneric add-activation (rete activation))
@@ -2065,7 +2064,6 @@
         (rete-autofacts rete)))
 
 (defmethod assert-fact-aux ((self rete) fact)
-  ;;;(print (list 'assert-fact-aux ))
   (with-truth-maintenance (self)
     (setf (fact-id fact) (next-fact-id self))
     (remember-fact self fact)
@@ -2076,12 +2074,10 @@
   fact)
   
 (defmethod adjust-belief (rete fact (belief-factor number))
-  ;;;(print (list 'adjust-belief belief-factor))
   (with-unique-fact (rete fact)
     (setf (belief-factor fact) belief-factor)))
 
 (defmethod adjust-belief (rete fact (belief-factor t))
-  ;;;(print (list 'adjust-belief-t belief-factor))
   (when (in-rule-firing-p)
     (let ((rule-belief (belief-factor (active-rule)))
           (facts (token-make-fact-list *active-tokens*)))
@@ -2089,7 +2085,6 @@
 
 (defmethod assert-fact ((self rete) fact &key belief)
   (let ((duplicate (duplicate-fact-p self fact)))
-    ;;;(print (list 'assert fact duplicate))
     (cond (duplicate
            (adjust-belief self duplicate belief))
           (t 
@@ -2322,11 +2317,9 @@
 
 ;;; File: belief-interface.lisp
 (defmethod belief:belief-factor ((self fact))
-  ;;;(print (list 'belief:belief-factor (belief-factor self)))
   (belief-factor self))
 
 (defmethod belief:belief-factor ((self rule))
-  ;;;(print (list 'belief:belief-factor (belief-factor self)))
   (belief-factor self))
 
 ;;; File: meta.lisp
@@ -2479,26 +2472,19 @@
 
 (defun token-push-fact (token fact)
   (with-accessors ((fact-vector token-facts)
-                   (hash-code token-hash-code)) token
+                   (hash-code token-hash-code))
+      token
     (vector-push-extend fact fact-vector)
     (push fact hash-code)
     token))
 
-#+nil
-(defun token-push-fact (token fact)
-  (let ()
-    (with-accessors ((fact-vector token-facts)
-                     (hash-code token-hash-code)) token
-      (print (list 'token-push fact-vector ))
-      (print (list 'token-push-code fact))
-      (vector-push-extend fact fact-vector)
-      (push fact hash-code)
-      token)))
-
-;;; bug: bug: (pop hash-code)
+;;; bug: bug: bug: (pop hash-code)
+;;; see (defmethod hash-key ((self token))
+;;; below
 (defun token-pop-fact (token)
   (with-accessors ((fact-vector token-facts)
-                   (hash-code token-hash-code)) token
+                   (hash-code token-hash-code))
+      token
     (unless (zerop (fill-pointer fact-vector))
       (pop hash-code)
       (aref fact-vector (decf (fill-pointer fact-vector))))))
@@ -2516,47 +2502,30 @@
 
 #+nil
 (defmethod hash-key ((self token))
-  (print (list 'hash-key-token self))
   (token-hash-code self))
 
-#+nil
-(defmethod hash-key ((self token))
-  (print (list 'hash-key-token self))
-  (hash-key (token-hash-code self)))
 
 ;;; bug: bug: bug:
 ;;; self => add-token
 ;;; (token-hash-code self) => (list fact)
 (defmethod hash-key ((self token))
-  ;;(print (list 'hash-key-token self))
-  ;;(describe self)
   (let* ((key (list))
         (facts (token-hash-code self))
         (fact (car facts)))
-    ;;(describe fact)
     (maphash #'(lambda (slot value)
-                 ;;(declare (ignore slot))
                  (push value key))
              (fact-slot-table fact))
     (push (fact-name fact) key)
     key))
 
-
-
-;;;(defgeneric make-add-token (fact))
-
 (defmethod make-add-token ((fact fact))
   (token-push-fact (make-instance 'add-token) fact))
-
-;;;(defgeneric make-remove-token (token))
 
 (defmethod make-remove-token ((fact fact))
   (token-push-fact (make-instance 'remove-token) fact))
 
 (defmethod make-remove-token ((token token))
   (replicate-token token :token-class 'remove-token))
-
-;;;(defgeneric make-reset-token (fact))
 
 (defmethod make-reset-token ((fact t))
   (token-push-fact (make-instance 'reset-token) t))
@@ -2567,7 +2536,7 @@
 ;;;  "Holds the results of query firings.")
 (defvar *query-result* nil)
 
-;;; bug: todo: LISA ASSERT
+;;;  LISA (ASSERT) => (ASSERT>)
 ;;;  "Runs a query (RULE instance), and returns both the value of *QUERY-RESULT*
 ;;;  and the query name itself."
 (defun run-query (query-rule)

@@ -612,9 +612,12 @@
               (rule-salience rule)))))
 
 (defmethod hash-key ((self activation))
+  ;;(print (list 'hash-key-activation (activation-tokens self)))
   (hash-key (activation-tokens self)))
 
 (defun make-activation (rule tokens)
+  ;;;(print (list 'make-activation-rule rule))
+  ;;;(print (list 'make-activation-tokens tokens))
   (make-instance 'activation :rule rule :tokens tokens))
 
 ;;; $Header: /cvsroot/lisa/lisa/src/core/heap.lisp,v 1.4 2007/09/17 22:42:39 youngde Exp $
@@ -1075,6 +1078,7 @@
     (rule-name rule)))
 
 (defun bind-rule-activation (rule activation tokens)
+  ;;;(print (list 'bind-rule-activation-tokens tokens))
   (setf (gethash (hash-key tokens) (rule-activations rule))
     activation))
 
@@ -2025,7 +2029,7 @@
 #+nil
 (defun find-fact-by-id (rete fact-id)
   (gethash fact-id (fact-id-table rete)))
-
+;;; bug: string
 (defun find-fact-by-id (rete fact-id)
   (gethash (string fact-id) (fact-id-table rete)))
 
@@ -2097,6 +2101,7 @@
         (rete-autofacts rete)))
 
 (defmethod assert-fact-aux ((self rete) fact)
+  ;;;(print (list 'assert-fact-aux ))
   (with-truth-maintenance (self)
     (setf (fact-id fact) (next-fact-id self))
     (remember-fact self fact)
@@ -2107,11 +2112,12 @@
   fact)
   
 (defmethod adjust-belief (rete fact (belief-factor number))
-   (with-unique-fact (rete fact)
-     (setf (belief-factor fact) belief-factor)))
+  ;;;(print (list 'adjust-belief belief-factor))
+  (with-unique-fact (rete fact)
+    (setf (belief-factor fact) belief-factor)))
 
 (defmethod adjust-belief (rete fact (belief-factor t))
-  ;;(declare (ignore rete))
+  ;;;(print (list 'adjust-belief-t belief-factor))
   (when (in-rule-firing-p)
     (let ((rule-belief (belief-factor (active-rule)))
           (facts (token-make-fact-list *active-tokens*)))
@@ -2119,9 +2125,10 @@
 
 (defmethod assert-fact ((self rete) fact &key belief)
   (let ((duplicate (duplicate-fact-p self fact)))
+    ;;;(print (list 'assert fact duplicate))
     (cond (duplicate
            (adjust-belief self duplicate belief))
-          (t
+          (t 
            (adjust-belief self fact belief)
            (assert-fact-aux self fact)))
     (if duplicate duplicate fact)))
@@ -2351,9 +2358,11 @@
 
 ;;; File: belief-interface.lisp
 (defmethod belief:belief-factor ((self fact))
+  ;;;(print (list 'belief:belief-factor (belief-factor self)))
   (belief-factor self))
 
 (defmethod belief:belief-factor ((self rule))
+  ;;;(print (list 'belief:belief-factor (belief-factor self)))
   (belief-factor self))
 
 ;;; File: meta.lisp
@@ -2447,7 +2456,7 @@
 
 (defclass token ()
   ((facts :initform
-          (make-array 0 :adjustable t :fill-pointer t)
+          (make-array 0 :adjustable t :fill-pointer 0)
           :accessor token-facts)
    (not-counter :initform 0
                 :accessor token-not-counter)
@@ -2511,6 +2520,18 @@
     (push fact hash-code)
     token))
 
+#+nil
+(defun token-push-fact (token fact)
+  (let ()
+    (with-accessors ((fact-vector token-facts)
+                     (hash-code token-hash-code)) token
+      (print (list 'token-push fact-vector ))
+      (print (list 'token-push-code fact))
+      (vector-push-extend fact fact-vector)
+      (push fact hash-code)
+      token)))
+
+;;; bug: bug: (pop hash-code)
 (defun token-pop-fact (token)
   (with-accessors ((fact-vector token-facts)
                    (hash-code token-hash-code)) token
@@ -2529,8 +2550,34 @@
           (token-push-fact new-token (aref existing-fact-vector i)))))
     new-token))
 
+#+nil
 (defmethod hash-key ((self token))
+  (print (list 'hash-key-token self))
   (token-hash-code self))
+
+#+nil
+(defmethod hash-key ((self token))
+  (print (list 'hash-key-token self))
+  (hash-key (token-hash-code self)))
+
+;;; bug: bug: bug:
+;;; self => add-token
+;;; (token-hash-code self) => (list fact)
+(defmethod hash-key ((self token))
+  ;;(print (list 'hash-key-token self))
+  ;;(describe self)
+  (let* ((key (list))
+        (facts (token-hash-code self))
+        (fact (car facts)))
+    ;;(describe fact)
+    (maphash #'(lambda (slot value)
+                 ;;(declare (ignore slot))
+                 (push value key))
+             (fact-slot-table fact))
+    (push (fact-name fact) key)
+    key))
+
+
 
 ;;;(defgeneric make-add-token (fact))
 

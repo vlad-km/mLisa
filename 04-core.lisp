@@ -271,8 +271,6 @@
             :reader fact-shadowsp)
    (meta-data :reader fact-meta-data)))
 
-;;; bug: EQUALP
-;;;(error "EQUALP!!!")
 (defmethod equals ((fact-1 fact) (fact-2 fact))
   (and (eq (fact-name fact-1) (fact-name fact-2))
        (equalp (fact-slot-table fact-1) (fact-slot-table fact-2))))
@@ -280,7 +278,6 @@
 (defmethod hash-key ((self fact))
   (let ((key (list)))
     (maphash #'(lambda (slot value)
-                 ;;(declare (ignore slot))
                  (push value key))
              (fact-slot-table self))
     (push (fact-name self) key)
@@ -329,21 +326,18 @@
 
 ;;;   "Returns the value associated with a slot name. FACT is a FACT instance;
 ;;;  SLOT-NAME is a SLOT-NAME instance."
-
 (defgeneric get-slot-value (self slot-name))
 
-;;; todo: common defmethod with error
-
-(defmethod get-slot-value ((self fact) (slot-name symbol))
-  (cond ((keywordp slot-name)
-         ;; (slot-name (eql :object))
-         (fact-clos-instance self))
-        (t (gethash slot-name (fact-slot-table self)))))
-
-;;; bug: (eql)
 #+nil
 (defmethod get-slot-value ((self fact) (slot-name (eql :object)))
   (fact-clos-instance self))
+
+(defmethod get-slot-value ((self fact) (slot-name symbol))
+  (cond ((keywordp slot-name)
+         (ecase slot-name 
+           (:object (fact-clos-instance self))
+           (:belief (belief-factor self))))
+        (t (gethash slot-name (fact-slot-table self)))))
 
 ;;;  "Retrieves the CLOS instance associated with a fact. FACT is a FACT
 ;;;  instance."
@@ -414,17 +408,15 @@
           (initialize-fact-from-instance self instance meta-data))
       self)))
 
-
-
 (defun initialize-fact-from-template (fact slots meta-data)
 ;;;  "Initializes a template-bound FACT. An instance of the FACT's associated
 ;;;  class is created and the slots of both are synchronized from the SLOTS
 ;;;  list. FACT is a FACT instance; SLOTS is a list of symbol/value pairs."
   (let ((instance
-         (make-instance (find-class (get-class-name meta-data) nil))))
+          (make-instance (find-class (get-class-name meta-data) nil))))
     ;; bug:
     (assert (not (null instance)) nil
-      "No class was found corresponding to fact name ~S." (fact-name fact))
+            "No class was found corresponding to fact name ~S." (fact-name fact))
     (setf (slot-value fact 'clos-instance) instance)
     (mapc #'(lambda (slot-spec)
               (let ((slot-name (first slot-spec))
@@ -474,8 +466,7 @@
 (defvar *fire-rule* nil)
 (defvar *watches* nil)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defvar *trace-output* *standard-output*) )
+(defvar *trace-output* *standard-output*)
 
 (defun watch-activation-detail (activation direction)
   (format *trace-output* "~A Activation: ~A : ~A~%"
@@ -512,11 +503,11 @@
 
 (defun watch-event (event)
   (ecase event
-    (:facts (setf *assert-fact* #'watch-assert)
-            (setf *retract-fact* #'watch-retract))
-    (:activations (setf *enable-activation* #'watch-enable-activation)
-                  (setf *disable-activation* #'watch-disable-activation))
-    (:rules (setf *fire-rule* #'watch-rule-firing))
+    (:facts (setq *assert-fact* #'watch-assert)
+            (setq *retract-fact* #'watch-retract))
+    (:activations (setq *enable-activation* #'watch-enable-activation)
+                  (setq *disable-activation* #'watch-disable-activation))
+    (:rules (setq *fire-rule* #'watch-rule-firing))
     (:all (watch-event :facts)
           (watch-event :activations)
           (watch-event :rules)))
@@ -543,7 +534,6 @@
           (delete event *watches*)))
   event)
 
-;;; note: ???
 (defun watches ()
   *watches*)
 
@@ -612,12 +602,9 @@
               (rule-salience rule)))))
 
 (defmethod hash-key ((self activation))
-  ;;(print (list 'hash-key-activation (activation-tokens self)))
   (hash-key (activation-tokens self)))
 
 (defun make-activation (rule tokens)
-  ;;;(print (list 'make-activation-rule rule))
-  ;;;(print (list 'make-activation-tokens tokens))
   (make-instance 'activation :rule rule :tokens tokens))
 
 ;;; $Header: /cvsroot/lisa/lisa/src/core/heap.lisp,v 1.4 2007/09/17 22:42:39 youngde Exp $
@@ -625,29 +612,13 @@
 ;;; Adapted for Lisa: 4/3/2006.
 ;;; Adapted for JSCL 2021 @vlad-km
 
-#+nil
-(defpackage "HEAP"
-  (:use :cl :cl-user)
-  (:export  create-heap heap-clear heap-collect heap-count heap-empty-p
-            heap-find heap-insert heap-peek heap-remove))
-
 (in-package :heap)
-
-;;; todo: as a defclass heap
-;;; todo: OR DEFSTRUCT type list ?
-#+nil
-(defclass  heap ()
-  ((less-fn :initform nil :accessor heap-less-fn)
-  (order :initform 0 :accessor heap-order)
-  (a :initform nil :accessor heap-a)
-  (max-count :initform 0 :accessor heap-max-count)))
 
 (defstruct (heap :named (:type list))
   less-fn
   order
   a
   max-count)
-
 
 (defun default-search-predicate (heap obj)
   (declare (ignore heap) (ignore obj))
@@ -662,23 +633,20 @@
       ((or (>= child (fill-pointer a)) (funcall less x (aref a child)))
        hole)
     (setf (aref a hole) (aref a child)
-      hole child)))
+          hole child)))
 
 ;;;  "Private.  Moves the HOLE until it's in a location suitable for holding
 ;;; X.  Does not actually bind X to the HOLE.  Returns the new
 ;;; index of the HOLE.  The hole itself percolates down; it's the X
 ;;; that percolates up."
-
 (defun percolate-up (heap hole x)
   (let ((d (heap-order heap))
 	      (a (heap-a heap))
 	      (less (heap-less-fn heap)))
-    ;;(print (list d a hole))
     (setf (aref a 0) x)
     (do ((i hole parent)
 	       (parent (floor (/ hole d)) (floor (/ parent d))))
         ((not (funcall less x (aref a parent))) i)
-      ;;(print (list parent hole d))
       (setf (aref a i) (aref a parent)))))
 
 (defvar *heap* nil)
@@ -687,7 +655,6 @@
 ;;; list, the heap's contents are intiailized to the values in that
 ;;; list; they are ordered according to LESS-FN.  INITIAL-CONTENTS must
 ;;; be a list or NIL."
-
 (defun heap-init (heap less-fn &key (order 2) (initial-contents nil))
   (setf *heap* heap)
   (setf (heap-less-fn heap) less-fn
@@ -704,17 +671,8 @@
     (setf (heap-max-count heap) (length (heap-a heap))))
   heap)
 
-#+nil
 (defun create-heap (less-fn &key (order 2) (initial-contents nil))
-  (heap-init (make-instance 'heap)
-             less-fn
-             :order order
-	           :initial-contents initial-contents))
-
-;;; note: Hmm todo:
-(defun create-heap (less-fn &key (order 2) (initial-contents nil))
-  (heap-init (make-heap)
-             less-fn
+  (heap-init (make-heap) less-fn
              :order order
 	           :initial-contents initial-contents))
 
@@ -783,10 +741,10 @@
   (let ((vec (heap-a heap)))
     (if (heap-empty-p heap)
         nil
-      (loop for i from 1 below (fill-pointer vec)
-            with obj = (aref vec i)
-            when (funcall fn heap obj)
-              collect obj))))
+        (loop for i from 1 below (fill-pointer vec)
+              with obj = (aref vec i)
+              when (funcall fn heap obj)
+                collect obj))))
 
 ;;;  "Return the first element in the heap, but don't remove it.  It'll
 ;;; be an error if the heap is empty.  (Should that be an error?)"
@@ -832,7 +790,23 @@
   ((heap :initarg :heap
          :reader heap)))
 
-;;; bug: not!
+(defclass indexed-priority-list ()
+  ((priority-vector :reader get-priority-vector)
+   (inodes :initform '()
+           :accessor get-inodes)
+   (delta :accessor get-delta)
+   (insertion-function :initarg :insertion-function
+                       :reader get-insertion-function)))
+;;;  (:documentation
+;;;   "Utility class that implements an indexed priority 'queue' to manage
+;;;   activations. Employed by various types of conflict resolution strategies,
+;;;   particularly DEPTH-FIRST-STRATEGY and BREADTH-FIRST-STRATEGY."))
+
+(defmethod initialize-instance :after ((self indexed-priority-list) &key (priorities 500))
+  (setf (slot-value self 'priority-vector)
+        (make-array (1+ priorities) :initial-element nil))
+  (setf (slot-value self 'delta) (/ priorities 2)))
+
 (defmethod reset-activations ((self priority-queue-mixin))
   (heap:heap-clear (heap self)))
 
@@ -842,7 +816,6 @@
 (defmethod lookup-activation ((self priority-queue-mixin) rule tokens)
   (heap:heap-find (heap self)
                   #'(lambda (heap activation)
-                      ;;(declare (ignore heap))
                       (and (equal (hash-key activation) (hash-key tokens))
                            (eq (activation-rule activation) rule)))))
 
@@ -850,7 +823,6 @@
   (heap:heap-collect
    (heap self)
    #'(lambda (heap activation)
-       ;;(declare (ignore heap))
        (and activation
             (eq rule (activation-rule activation))))))
 
@@ -870,7 +842,6 @@
 
 ;;; bug:
 (defmethod find-activation ((self builtin-strategy) rule token)
-  ;;(declare (ignore rule token))
   (assert nil nil "Why are we calling FIND-ACTIVATION?"))
 
 (defmethod find-all-activations ((self builtin-strategy) rule)
@@ -971,8 +942,6 @@
     (maphash (lambda (nothing rule) (push rule collection)) (context-rules context))
     (reverse collection)))
 
-
-
 (defun clear-context (context)
   (clear-activations context)
   (clrhash (context-rules context)))
@@ -1005,7 +974,7 @@
                            ,rule-name))
             (,long-name (if ,qualifier
                             ,rule-name
-                          (concatenate 'string ,context "." ,short-name))))
+                          (jscl::concat ,context "." ,short-name))))
        ,@body)))
 
 (defun make-context (name &key (strategy nil))

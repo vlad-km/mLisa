@@ -76,4 +76,9 @@
     (t (equal x y))))
 
 
+(defun vector-pop (vector)
+  (let ((element (aref vector (1- (length vector)))))
+    (decf (fill-pointer vector))
+    element))
+
 ;;; EOF

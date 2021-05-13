@@ -812,7 +812,7 @@
 
 (defmethod test-against-left-memory ((self node2-exists) (right-token add-token))
   (maphash
-   (lambda (ignore left-token)
+   (lambda (ignore left-tokens)
      (when (and (test-tokens self left-tokens right-token)
                 (= (token-increment-exists-counter left-tokens) 1))
        (pass-tokens-to-successor 
@@ -830,7 +830,7 @@
 
 (defmethod test-against-left-memory ((self node2-exists) (right-token remove-token))
   (maphash
-   (lambda (ignore left-token)
+   (lambda (ignore left-tokens)
      (when (test-tokens self left-tokens right-token)
        (token-decrement-exists-counter left-tokens)
        (pass-tokens-to-successor

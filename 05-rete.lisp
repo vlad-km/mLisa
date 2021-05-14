@@ -283,7 +283,6 @@
                     :reader node-test-cache)))
 
 (defgeneric mak-hash-successor-node (node))
-
 (defmethod mak-hash-successor-node (node)
   (write-to-string node))
 
@@ -293,37 +292,37 @@
         'refcnt (shared-node-refcnt node))  )
 
 (defmethod mak-hash-successor-node ((node node1))
-  (list 'shared-node 'node1
+  (list 'node1
         'successors  (hash-table-count (shared-node-successors node))
         'refcnt (shared-node-refcnt node))  )
 
 (defmethod mak-hash-successor-node ((node node2))
-  (list 'join-node 'node2
+  (list 'node2
         'successors (join-node-successor node)
         'logical (join-node-logical-block node)
         'left (hash-table-count (join-node-left-memory node))
-        'left (hash-table-count (join-node-right-memory node)))  )
+        'right (hash-table-count (join-node-right-memory node)))  )
 
 (defmethod mak-hash-successor-node ((node node2-not))
-  (list 'shared-node 'node2-not
+  (list 'node2-not
         'successors (join-node-successor node)
         'logical (join-node-logical-block node)
         'left (hash-table-count (join-node-left-memory node))
-        'left (hash-table-count (join-node-right-memory node))))
+        'right (hash-table-count (join-node-right-memory node))))
 
 (defmethod mak-hash-successor-node ((node node2-test))
-  (list 'shared-node 'node2-test
+  (list 'node2-test
         'successors (join-node-successor node)
         'logical (join-node-logical-block node)
         'left (hash-table-count (join-node-left-memory node))
-        'left (hash-table-count (join-node-right-memory node))))
+        'right (hash-table-count (join-node-right-memory node))))
 
 (defmethod mak-hash-successor-node ((node node2-exists))
-  (list 'shared-node 'node2-exists
+  (list 'node2-exists
         'successors (join-node-successor node)
         'logical (join-node-logical-block node)
         'left (hash-table-count (join-node-left-memory node))
-        'left (hash-table-count (join-node-right-memory node))))
+        'right (hash-table-count (join-node-right-memory node))))
 
 ;;;;;; METHODS
 

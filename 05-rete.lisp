@@ -317,6 +317,8 @@
         'left (hash-table-count (join-node-left-memory node))
         'right (hash-table-count (join-node-right-memory node))))
 
+(defmethod hash-key ((node node2-test)) (mak-hash-successor-node node))
+
 (defmethod mak-hash-successor-node ((node node2-exists))
   (list 'node2-exists
         'successors (join-node-successor node)
@@ -499,7 +501,11 @@
              successors)
     successor-node))
 
+;;; error function t debug
 (defmethod accept-token ((self node1) token)
+  (print (list 'accept-tokens self token ))
+  (print (list 'accept-token-funcall (node1-test self) ))
+  (describe self)
   (if (funcall (node1-test self) token)
       (pass-token-to-successors self token)
     nil))

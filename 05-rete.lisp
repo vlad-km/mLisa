@@ -17,8 +17,8 @@
   (let ((test (gethash key *node-test-table*)))
     (when (null test)
       (setq test
-        (setf (gethash key *node-test-table*)
-          (funcall constructor))))
+            (setf (gethash key *node-test-table*)
+                  (funcall constructor))))
     test))
   
 (defun clear-node-test-table ()
@@ -39,6 +39,7 @@
                  (function
                   (lambda (token)
                     ;;(declare (optimize (speed 3) (debug 1) (safety 0)))
+                   ;;(print (list 'test-lambda class 'receive token))
                     (let ((fact (token-top-fact token)))
                       (class-matches-p 
                        (find-instance-of-fact fact) fact class)))))))
@@ -505,6 +506,7 @@
 (defmethod accept-token ((self node1) token)
   (print (list 'accept-tokens self token ))
   (print (list 'accept-token-funcall (node1-test self) ))
+  (print (list 'accept-token-funcall (jscl::lambda-code (node1-test self))))
   (describe self)
   (if (funcall (node1-test self) token)
       (pass-token-to-successors self token)

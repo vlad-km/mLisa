@@ -251,7 +251,7 @@
 
 (defclass network-uid nil ((id :initform (make-network-hash-key) :reader net-hash-key)))
 
-(defclass shared-node (newtwork-uid)
+(defclass shared-node (network-uid)
   ((successors :initform (make-hash-table :test #'equal)
                :reader shared-node-successors)
    (refcnt :initform 0
@@ -259,7 +259,7 @@
 
 (defmethod hash-key ((node shared-node)) (net-hash-key node))
 
-(defclass terminal-node (newtwork-uid)
+(defclass terminal-node (network-uid)
   ((rule :initarg :rule
          :initform nil
          :reader terminal-node-rule)))
@@ -270,7 +270,7 @@
   ((test :initarg :test
          :reader node1-test)))
 
-(defclass join-node (newtwork-uid)
+(defclass join-node (network-uid)
   ((successor :initform nil
               :accessor join-node-successor)
    (logical-block :initform nil

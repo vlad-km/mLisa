@@ -1269,10 +1269,7 @@
              (make-pattern-slot :name slot-name :value slot-value :slot-binding binding
                                 :intra-pattern-bindings (intra-pattern-bindings-p (list binding) location))))
           ((and (slot-value-is-variable-p slot-value)
-                constraint)
-           ;; ugly prevent (name ?var "value")
-           (unless (consp constraint)
-             (error "What the f*g slot syntax: ~a~%" form))
+                (consp constraint))
            ;; eg. (slot-name ?value (equal ?value "frodo")) - it's error (car "frodo")
            (let ((binding (find-or-set-slot-binding slot-value slot-name location)))
              (multiple-value-bind (constraint-form constraint-bindings negatedp)

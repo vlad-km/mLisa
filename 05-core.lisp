@@ -142,14 +142,6 @@
     (setf *active-engine* (make-inference-engine)))
   *active-engine*)
 
-#+nil
-(defun use-default-engine ()
-  (warn "USE-DEFAULT-ENGINE is deprecated. LISA now automatically creates a
-  default instance of the inference engine at load time.")
-  (when (null *active-engine*)
-    (setf *active-engine* (make-inference-engine)))
-  *active-engine*)
-
 ;;;  "Returns the currently-active inference engine. Usually only invoked by code
 ;;;  running within the context of WITH-INFERENCE-ENGINE."
 (defun current-engine (&optional (errorp t))
@@ -520,7 +512,7 @@
      (unwatch-event :rules)))
   (unless (eq event :all)
     (setf *watches*
-          ;; bug: function delete undefined !!!
+          ;; bug: function delete
           (delete event *watches*)))
   event)
 

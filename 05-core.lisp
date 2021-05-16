@@ -1481,7 +1481,6 @@
        
 ;;; File: language.lisp
 ;;; Description: Code that implements the Lisa programming language.
-
 (defmacro defrule (name (&key (salience 0) (context nil) (belief nil) (auto-focus nil)) &body body)
   (let ((rule-name (gensym)))
     `(let ((,rule-name ,@(if (consp name) `(,name) `(',name))))
@@ -1545,6 +1544,20 @@
                             `(,value))))))
           body))
 
+;;; ASSERT>
+;;;     (assert> (fact-specifier))
+;;; Inserts a fact identified by fact-specifier into the knowledge base.
+;;; There are two forms of ASSERT>; the first operates on template-based facts, the other on CLOS instances.
+;;; For templates, ASSERT> takes a symbol representing the name of the template, followed
+;;; by a list of (slot-name value) pairs:  (assert> (frodo (name frodo) (age 100))
+;;; If the template associated with a fact has not been declared prior to its assertion,
+;;; Lisa will signal a continuable error.
+;;; For instances of user-defined classes, ASSERT> takes a form that must evaluate to a CLOS instance:
+;;; (assert> ((make-instance 'frodo :name 'frodo :age 100)))
+;;; or:
+;;; (let ((?instance (make-instance 'frodo :name 'frodo)))
+;;;    (assert> (?instance)))
+
 (defmacro assert> ((name &body body) &key (belief nil))
   (let ((fact (gensym))
         (fact-object (gensym)))
@@ -1563,12 +1576,21 @@
                (bind-logical-dependencies ,fact))
              (assert-fact (inference-engine) ,fact :belief ,belief)))))))
 
+
+;;; DEFFACTS
+;;;     (deffacts deffact-name (key*) fact-list*)
+;;; Registers a list of facts that will be automatically inserted into
+;;; the knowledge base upon each RESET. The deffact-name is the symbolic name that will be
+;;; attached to this group of facts; fact-list is a list of fact specifiers.
+;;; The format of each fact specifier is identical to that found in an ASSERT> form,
+;;; minus the assert keyword. There are currently no supported keywords for this macro.
 (defmacro deffacts (name (&key &allow-other-keys) &body body)
   (parse-and-insert-deffacts name body))
 
 (defun engine ()
   (active-engine))
 
+;;; Within the context of an executing rule, returns the CLOS object representing that rule
 (defun rule ()
   (active-rule))
 
@@ -1582,7 +1604,7 @@
   (let ((facts (get-fact-list (inference-engine))))
     (dolist (fact facts)
       (format t "~S~%" fact))
-    (format t "For a total of ~D fact~:P.~%" (length facts))
+    (format t "For a total of ~D fact(s).~%" (length facts))
     (values)))
 
 (defun rules (&optional (context-name nil))
@@ -1600,20 +1622,35 @@
     (format t "For a total of ~D activation~:P.~%" (length activations))
     (values)))
 
+;;; Re-initializes the knowledge base, removing facts, clearing all context agendas,
+;;; and asserting the initial-fact.
 (defun reset ()
   (reset-engine (inference-engine)))
 
+;;; Re-initializes the Lisa environment, mostly by creating a new instance
+;;; of the default inference engine
 (defun clear ()
   (clear-system-environment))
 
+;;; Runs the inference engine, optionally pushing the context names on focus-list
+;;; onto the focus stack before doing so. Execution will continue until either all
+;;; agendas are exhausted or a rule calls (halt).
 (defun run (&optional (contexts nil))
   (unless (null contexts)
     (apply #'focus contexts))
   (run-engine (inference-engine)))
 
+;;; Runs the engine in step increments, single-stepping by default.
+;;; Here, "single-stepping" means "one rule at a time".
 (defun walk (&optional (step 1))
   (run-engine (inference-engine) step))
 
+;;; RETRACT
+;;; (retract fact-or-instance)
+;;; Removes a fact or instance from the knowledge base. In the case of a template-based fact,
+;;; fact-or-instance may be either a symbol representing the name of the fact, or an integer
+;;; mapping to the fact identifier; for CLOS objects fact-or-instance must be an
+;;; instance of STANDARD-OBJECT.
 (defmethod retract ((fact-object fact))
   (retract-fact (inference-engine) fact-object))
 
@@ -1623,6 +1660,11 @@
 (defmethod retract ((fact-object t))
   (parse-and-retract-instance fact-object (inference-engine)))
 
+;;; MODIFY
+;;; (modify fact (slot-name value)*)
+;;; Makes changes to the fact instance identified by fact. Affected slots and their
+;;; new values are specified by (slot-name value). Note that value can be an arbitrary Lisp
+;;; expression that will be evaluated at execution time.
 (defmacro modify (fact &body body)
   `(modify-fact (inference-engine) ,fact ,@(expand-slots body)))
 
@@ -1638,9 +1680,16 @@
             (if watches watches "nothing"))
     (values)))
 
+;;; Halts the inference engine, even if the agendas still have activations.
+;;; Typically used only on rule RHSs.
 (defun halt ()
   (halt-engine (inference-engine)))
 
+;;; Notifies Lisa that a change has been made to instance outside of the knowledge-base
+;;; (i.e. not via the modify operator), and synchronizes the instance with its associated fact.
+;;; Slot-name is either the symbolic name of a slot belonging to instance that has changed value,
+;;; or NIL (the default), in which case all slots are synchronized.
+;;; An application must call this method whenever a slot change occurs outside of Lisa's control.
 (defun mark-instance-as-changed (instance &key (slot-id nil)) 
   (mark-clos-instance-as-changed (inference-engine) instance slot-id))
 

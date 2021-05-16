@@ -1264,7 +1264,6 @@
            (make-pattern-slot :name slot-name :value (second slot-value) :negated t))
           ((and (slot-value-is-variable-p slot-value)
                 (not constraint))
-           (print (list 'parse-not-constraint slot-value constraint))
            ;; eg. (slot-name ?value)
            (let ((binding (find-or-set-slot-binding slot-value slot-name location)))
              (make-pattern-slot :name slot-name :value slot-value :slot-binding binding

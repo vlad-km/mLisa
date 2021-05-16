@@ -1151,6 +1151,7 @@
            (,constraint (third ,form)))
        ,@body)))
 
+;;; origin with hash-values
 #+nil
 (defun make-binding-set ()
   (loop for binding being the hash-values of *binding-table*
@@ -1263,13 +1264,17 @@
            (make-pattern-slot :name slot-name :value (second slot-value) :negated t))
           ((and (slot-value-is-variable-p slot-value)
                 (not constraint))
+           (print (list 'parse-not-constraint slot-value constraint))
            ;; eg. (slot-name ?value)
            (let ((binding (find-or-set-slot-binding slot-value slot-name location)))
              (make-pattern-slot :name slot-name :value slot-value :slot-binding binding
                                 :intra-pattern-bindings (intra-pattern-bindings-p (list binding) location))))
           ((and (slot-value-is-variable-p slot-value)
                 constraint)
-           ;; eg. (slot-name ?value (equal ?value "frodo"))
+           ;; ugly prevent (name ?var "value")
+           (unless (consp constraint)
+             (error "What the f*g slot syntax: ~a~%" form))
+           ;; eg. (slot-name ?value (equal ?value "frodo")) - it's error (car "frodo")
            (let ((binding (find-or-set-slot-binding slot-value slot-name location)))
              (multiple-value-bind (constraint-form constraint-bindings negatedp)
                  (parse-one-slot-constraint slot-value constraint)

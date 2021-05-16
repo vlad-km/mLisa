@@ -62,10 +62,6 @@
 (defgeneric retract-fact (rete fact-id))
 (defgeneric run-engine (rete &optional (step -1)))
 (defgeneric slot-value-of-instance (object slot-name))
-;;;(defgeneric list-activations (strategy))
-;;;(defgeneric make-rete-network (&rest args &key &allow-other-keys))
-;;;(defgeneric next-activation (strategy))
-;;;(defgeneric remove-activations (strategy))
 
 
 (defvar *consider-taxonomy-when-reasoning* nil)

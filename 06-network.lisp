@@ -1219,10 +1219,10 @@
 
 (defun show-network (rete-network &optional (strm *standard-output*))
   (labels ((get-roots ()
-             (loop for node being the hash-values of (rete-roots rete-network)
+             (loop for node if (reverse (jscl::hash-table-values (rete-roots rete-network)))
                    collect node))
            (get-successors (shared-node)
-             (loop for s being the hash-values of (shared-node-successors shared-node) 
+             (loop for s in (reverse (jscl::hash-table-values (shared-node-successors shared-node))) 
                    collect (successor-node s)))
            (get-successor (join-node)
              (list (successor-node (join-node-successor join-node))))

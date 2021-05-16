@@ -1216,10 +1216,10 @@
 
 
 ;;; File: network-crawler.lisp
-
+#+nil
 (defun show-network (rete-network &optional (strm *standard-output*))
   (labels ((get-roots ()
-             (loop for node if (reverse (jscl::hash-table-values (rete-roots rete-network)))
+             (loop for node in (reverse (jscl::hash-table-values (rete-roots rete-network)))
                    collect node))
            (get-successors (shared-node)
              (loop for s in (reverse (jscl::hash-table-values (shared-node-successors shared-node))) 

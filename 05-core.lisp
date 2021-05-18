@@ -615,10 +615,17 @@
 ;;;   activations. Employed by various types of conflict resolution strategies,
 ;;;   particularly DEPTH-FIRST-STRATEGY and BREADTH-FIRST-STRATEGY."))
 
+#+nil
 (defmethod initialize-instance :after ((self indexed-priority-list) &key (priorities 500))
   (setf (slot-value self 'priority-vector)
         (make-array (1+ priorities) :initial-element nil))
   (setf (slot-value self 'delta) (/ priorities 2)))
+
+(defmethod initialize-instance :after ((self indexed-priority-list) &rest all-keys)
+  (let ((priorities (get-keyword-from all-keys :priorities 500)))
+    (setf (slot-value self 'priority-vector)
+          (make-array (1+ priorities) :initial-element nil))
+    (setf (slot-value self 'delta) (/ priorities 2))))
 
 (defmethod reset-activations ((self priority-queue-mixin))
   (heap:heap-clear (heap self)))

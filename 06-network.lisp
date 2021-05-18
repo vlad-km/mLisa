@@ -1126,15 +1126,17 @@
                  (remove-nodes (rest nodes))))))
     (remove-nodes (rule-node-list rule))))
 
-#+nil
+
+(defgeneric find-existing-successor (parent node))
+
 (defmethod find-existing-successor ((parent shared-node) (node node1))
   (gethash (node1-test node) (shared-node-successors parent)))
 
-#+nil
 (defmethod find-existing-successor (parent node)
-  (declare (ignore parent node))
+  ;;(declare (ignore parent node))
   nil)
 
+#+nil
 (defun find-existing-successor (parent node)
   (typecase parent
     (shared-node
@@ -1185,33 +1187,39 @@
              (add-node-set t root)
              (collect-node-sets root (shared-node-successor-nodes root)))
            (merge-successors (parent successors)
-             (if (endp successors) parent
+             ;;(print (list 'merge-successors 'parent parent 'successors successors))
+             (if (endp successors)
+                 parent
                  (let* ((new-successor (first successors))
-                        (existing-successor 
-                          (find-existing-successor parent (successor-node new-successor))))
+                        (existing-successor
+                          (find-existing-successor parent
+                                                   (successor-node new-successor))))
+                   ;;(print (list 'merge-succ new-successor existing-successor))
                    (cond ((null existing-successor)
                           (add-successor parent
                                          (successor-node new-successor)
                                          (successor-connector new-successor))
                           (add-node-set parent (successor-node new-successor)))
                          (t (add-node-set parent (successor-node existing-successor) t)
-                            (merge-successors 
-                             (successor-node existing-successor)
-                             (shared-node-all-successors 
-                              (successor-node new-successor)))))
+                            (merge-successors (successor-node existing-successor)
+                                              (shared-node-all-successors (successor-node new-successor)))))
                    (merge-successors parent (rest successors)))))
            (merge-root-node (new-root)
-             (let ((existing-root
-                     (find-root-node to-rete new-root)))
-               (cond ((null existing-root)
-                      (add-new-root to-rete new-root))
+             (let ((existing-root (find-root-node to-rete new-root)))
+               ;;(print (list 'merge-root existing-root))
+               (cond ((null existing-root) (add-new-root to-rete new-root))
                      (t
+                      ;;(print (list 'merge-root new-root '>> existing-root))
                       (add-node-set t existing-root)
-                      (merge-successors
-                       existing-root 
-                       (shared-node-all-successors new-root)))))))
+                      (merge-successors  existing-root 
+                                         (shared-node-all-successors new-root)))))))
     (let ((*node-set* (list)))
-      (maphash (lambda (ignore new-root) (merge-root-node new-root)) (rete-roots from-rete))
+      ;;(print (list 'rete-roots (rete-roots from-rete)))
+      (maphash
+       (lambda (ignore new-root)
+         ;;(print (list 'map-ignore ignore 'root new-root))
+         (merge-root-node new-root))
+       (rete-roots from-rete))
       (nreverse *node-set*))))
 
 

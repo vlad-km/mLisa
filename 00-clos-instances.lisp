@@ -151,17 +151,6 @@
   (constraint nil)
   (constraint-bindings nil :type list))
 
-(defstruct parsed-pattern
-  (class nil :type symbol)
-  (slots nil)
-  (address 0 :type integer)
-  (pattern-binding nil)
-  (test-bindings nil :type list)
-  (binding-set nil :type list)
-  (logical nil :type symbol)
-  (sub-patterns nil :type list)
-  (type :generic :type symbol))
-
 (defstruct rule-actions
   (bindings nil :type list)
   (actions nil :type list))

@@ -83,6 +83,7 @@
 (defun (setf use-fancy-assert) (new-value)
   (setq *use-fancy-assert* new-value))
 
+#+nil
 (defclass inference-engine-object () ())
 
 (defvar *clear-handlers* (list))
@@ -220,6 +221,7 @@
 ;;; "This class represents 'autoloaded' facts that are asserted automatically
 ;;;  as part of an inference engine reset."
 
+#+nil
 (defclass deffacts ()
   ((name :initarg :name
          :reader deffacts-name)
@@ -544,6 +546,7 @@
 (defvar *activation-timestamp* 0)
 
 ;;; "Represents a rule activation."
+#+nil
 (defclass activation ()
   ((rule :initarg :rule
          :initform nil
@@ -596,13 +599,16 @@
 ;;;    "Serves as the base class for all classes implementing conflict
 ;;;   resolution strategies."
 
+#+nil
 (defclass strategy ()
   ())
 
+#+nil
 (defclass priority-queue-mixin ()
   ((heap :initarg :heap
          :reader heap)))
 
+#+nil
 (defclass indexed-priority-list ()
   ((priority-vector :reader get-priority-vector)
    (inodes :initform '()
@@ -654,6 +660,7 @@
                      (lambda (heap activation) activation)))
 
 ;;; "A base class for all LISA builtin conflict resolution strategies."
+#+nil
 (defclass builtin-strategy (strategy priority-queue-mixin)
   ())
   
@@ -677,6 +684,7 @@
   (get-all-activations self))
 
 ;;; "A depth-first conflict resolution strategy."
+#+nil
 (defclass depth-first-strategy (builtin-strategy)
   ())
 
@@ -695,6 +703,7 @@
                                   (t nil))))))
 
 ;;; "A breadth-first conflict resolution strategy."
+#+nil
 (defclass breadth-first-strategy (builtin-strategy)
   ())
 
@@ -714,6 +723,7 @@
 
 ;;; File: context.lisp
 
+#+nil
 (defclass context ()
   ((name :initarg :name
          :reader context-name)
@@ -810,6 +820,7 @@
 
 ;;;  "Represents production rules after they've been analysed by the language
 ;;;  parser."
+#+nil
 (defclass rule ()
   ((short-name :initarg :short-name
                :initform nil
@@ -1032,7 +1043,6 @@
 
 ;;;   "Represents the canonical form of a pattern analysed by the DEFRULE parser."
 
-;;; todo: as defclass
 (defstruct parsed-pattern
   (class nil :type symbol)
   (slots nil)
@@ -2284,6 +2294,7 @@
 
 ;;; File: token.lisp
 
+#+nil
 (defclass token ()
   ((facts :initform
           (make-array 0 :adjustable t :fill-pointer 0)
@@ -2297,9 +2308,9 @@
    (contents :initform nil
              :reader token-contents)))
 
-(defclass add-token (token) ())
-(defclass remove-token (token) ())
-(defclass reset-token (token) ())
+#+nil (defclass add-token (token) ())
+#+nil (defclass remove-token (token) ())
+#+nil (defclass reset-token (token) ())
 
 (defun token-increment-exists-counter (token)
   (incf (token-exists-counter token)))

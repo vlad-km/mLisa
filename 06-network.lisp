@@ -249,8 +249,10 @@
 ;;; CLASSES
 (defun make-network-hash-key nil (intern (symbol-name (gensym))))
 
+#+nil
 (defclass network-uid nil ((id :initform (make-network-hash-key) :reader net-hash-key)))
 
+#+nil
 (defclass shared-node (network-uid)
   ((successors :initform (make-hash-table :test #'equal)
                :reader shared-node-successors)
@@ -259,6 +261,7 @@
 
 (defmethod hash-key ((node shared-node)) (net-hash-key node))
 
+#+nil
 (defclass terminal-node (network-uid)
   ((rule :initarg :rule
          :initform nil
@@ -266,10 +269,12 @@
 
 (defmethod hash-key ((node terminal-node)) (net-hash-key node))
 
+#+nil
 (defclass node1 (shared-node)
   ((test :initarg :test
          :reader node1-test)))
 
+#+nil
 (defclass join-node (network-uid)
   ((successor :initform nil
               :accessor join-node-successor)
@@ -282,13 +287,14 @@
    (right-memory :initform (make-hash-table :test #'equal)
                  :reader join-node-right-memory)))
 
-(defclass node2 (join-node) ())
-(defclass node2-not (join-node) ())
-(defclass node2-test (join-node) ())
-(defclass node2-exists (join-node) ())
+#+nil (defclass node2 (join-node) ())
+#+nil (defclass node2-not (join-node) ())
+#+nil (defclass node2-test (join-node) ())
+#+nil (defclass node2-exists (join-node) ())
 
 (defmethod hash-key ((node join-node)) (net-hash-key node))
 
+#+nil
 (defclass rete-network ()
   ((root-nodes :initform (make-hash-table)
                :initarg :root-nodes

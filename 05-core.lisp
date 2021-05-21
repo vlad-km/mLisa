@@ -241,6 +241,7 @@
 ;;; File: fact.lisp
 
 ;;; "This class represents all facts in the knowledge base."
+#+nil
 (defclass fact ()
   ((name :initarg :name
          :reader fact-name)
@@ -1018,6 +1019,8 @@
 
 ;;;  "Represents the canonical form of a slot within a pattern analysed by the
 ;;;  DEFRULE parser."
+
+#+nil
 (defstruct pattern-slot
   (name nil :type symbol)
   (value nil)
@@ -1043,6 +1046,7 @@
 
 ;;;   "Represents the canonical form of a pattern analysed by the DEFRULE parser."
 
+#+nil
 (defstruct parsed-pattern
   (class nil :type symbol)
   (slots nil)
@@ -1054,7 +1058,7 @@
   (sub-patterns nil :type list)
   (type :generic :type symbol))
 
-;;; todo: as defclass
+#+nil
 (defstruct rule-actions
   (bindings nil :type list)
   (actions nil :type list))
@@ -1733,7 +1737,7 @@
 ;;; File: rete.lisp
 ;;; Description: Class representing the inference engine itself.
 
-;;;(error "EQUALP")
+#+nil
 (defclass rete ()
   ((fact-table :initform (make-hash-table :test #'equal)
                :accessor rete-fact-table)
@@ -1770,7 +1774,7 @@
 ;;; FACT-META-OBJECT represents data about facts. Every Lisa fact is backed by
 ;;; a CLOS instance that was either defined by the application or internally
 ;;; by Lisa (via DEFTEMPLATE).
-
+#+nil
 (defstruct fact-meta-object
   (class-name nil :type symbol)
   (slot-list nil :type list)

@@ -15,6 +15,23 @@
               :initform nil
               :reader deffacts-fact-list)))
 
+;;; "This class represents all facts in the knowledge base."
+(defclass fact ()
+  ((name :initarg :name
+         :reader fact-name)
+   (id :initform -1
+       :accessor fact-id)
+   (slot-table :reader fact-slot-table
+               :initform (make-hash-table :test #'equal))
+   (belief :initarg :belief
+           :initform nil
+           :accessor belief-factor)
+   (clos-instance :reader fact-clos-instance)
+   (shadows :initform nil
+            :reader fact-shadowsp)
+   (meta-data :reader fact-meta-data)))
+
+
 ;;; "Represents a rule activation."
 (defclass activation ()
   ((rule :initarg :rule
@@ -123,9 +140,65 @@
   (sub-patterns nil :type list)
   (type :generic :type symbol))
 
+;;;  "Represents the canonical form of a slot within a pattern analysed by the
+;;;  DEFRULE parser."
+(defstruct pattern-slot
+  (name nil :type symbol)
+  (value nil)
+  (slot-binding nil :type list)
+  (negated nil :type symbol)
+  (intra-pattern-bindings nil :type symbol)
+  (constraint nil)
+  (constraint-bindings nil :type list))
+
+(defstruct parsed-pattern
+  (class nil :type symbol)
+  (slots nil)
+  (address 0 :type integer)
+  (pattern-binding nil)
+  (test-bindings nil :type list)
+  (binding-set nil :type list)
+  (logical nil :type symbol)
+  (sub-patterns nil :type list)
+  (type :generic :type symbol))
+
 (defstruct rule-actions
   (bindings nil :type list)
   (actions nil :type list))
+
+(defclass rete ()
+  ((fact-table :initform (make-hash-table :test #'equal)
+               :accessor rete-fact-table)
+   (fact-id-table :initform (make-hash-table :test #'equal)
+                  :accessor fact-id-table)
+   (instance-table :initform (make-hash-table)
+                   :reader rete-instance-table)
+   (rete-network :initform (make-rete-network)
+                 :reader rete-network)
+   (next-fact-id :initform -1
+                 :accessor rete-next-fact-id)
+   (autofacts :initform (list)
+              :accessor rete-autofacts)
+   (meta-data :initform (make-hash-table)
+              :reader rete-meta-data)
+   (dependency-table :initform (make-hash-table :test #'equal)
+                     :accessor rete-dependency-table)
+   (contexts :initform (make-hash-table :test #'equal)
+             :reader rete-contexts)
+   (focus-stack :initform (list)
+                :accessor rete-focus-stack)
+   (halted :initform nil
+           :accessor rete-halted)
+   (firing-count :initform 0
+                 :accessor rete-firing-count)))
+
+;;; FACT-META-OBJECT represents data about facts. Every Lisa fact is backed by
+;;; a CLOS instance that was either defined by the application or internally
+;;; by Lisa (via DEFTEMPLATE).
+(defstruct fact-meta-object
+  (class-name nil :type symbol)
+  (slot-list nil :type list)
+  (superclasses nil :type list))
 
 (defclass token ()
   ((facts :initform

@@ -81,4 +81,14 @@
     (decf (fill-pointer vector))
     element))
 
+;;; for debug
+;;; todo: include to jscl-master next path
+(defun printout (stream &rest args)
+  (or (eq stream 't) (streamp stream))
+  (dolist (it args)
+    (if (eql it #\newline)
+        (terpri)
+      (format stream "~a " it)))
+  (terpri))
+
 ;;; EOF

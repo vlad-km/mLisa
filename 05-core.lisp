@@ -2396,6 +2396,7 @@
 ;;; bug: bug: bug:
 ;;; self => add-token
 ;;; (token-hash-code self) => (list fact)
+#+nil
 (defmethod hash-key ((self token))
   (let* ((key (list))
         (facts (token-hash-code self))
@@ -2404,6 +2405,20 @@
                  (push value key))
              (fact-slot-table fact))
     (push (fact-name fact) key)
+    key))
+
+(defmethod hash-key ((self token))
+  (let* ((key (list))
+         (facts (token-hash-code self))
+         (fact (car facts)))
+    (typecase fact
+      (join-node
+       (setq fact (net-hash-key fact)))
+      (otherwise
+       (maphash #'(lambda (slot value)
+                    (push value key))
+                (fact-slot-table fact))
+       (push (fact-name fact) key)))
     key))
 
 (defmethod make-add-token ((fact fact))
